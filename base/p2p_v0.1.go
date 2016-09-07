@@ -19,10 +19,10 @@ package main
 import (
 	"errors"
 	"fmt"
-	"strconv"
-	"encoding/json"
-	"time"
-	"strings"
+//	"strconv"
+//	"encoding/json"
+//	"time"
+//	"strings"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
@@ -56,26 +56,26 @@ type Risk struct{
 }
 
 type Member struct{
-	Name 		string 		'json:"name"'
-    Email 		string 		'json:"email"'
-    Contact 	int 		'json:"contact"'
-    HomeAddress	string 		'json:"address"'
-    Dob			string 		'json:"dob"'
-    Risks 		[]Risk 		'json:"risks"'
+	Name 		string 		`json:"name"`
+    Email 		string 		`json:"email"`
+    Contact 	int 		`json:"contact"`
+    HomeAddress	string 		`json:"address"`
+    Dob			string 		`json:"dob"`
+    Risks 		[]Risk 		`json:"risks"`
 }
 
 type Group struct{
-	Members		[]Member 	'json:"members"'	 
-	RiskType	string		'json:"riskType"'	
-	Status		int 		'json:"status"'
-	PoolBalance	int 		'json:"poolBalance"'
-	Insurer		string 		'json:"insurer"'
+	Members		[]Member 	`json:"members"`	 
+	RiskType	string		`json:"riskType"`	
+	Status		int 		`json:"status"`
+	PoolBalance	int 		`json:"poolBalance"`
+	Insurer		string 		`json:"insurer"`
 }
 
 
 // Init resets all the things
-func (t *SimpleChaincode) Init(stub shim.ChaincodeInterface, function string, args []string) ([]byte, error) {
-//func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	if len(args) != 1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 1")
@@ -86,7 +86,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeInterface, function string, ar
 	if err != nil {
 		return nil, err
 	}
-	
+	/*
 	var empty []string
 	jsonAsBytes, _ := json.Marshal(empty)								//marshal an emtpy array of strings to clear the index
 	err = stub.PutState(marbleIndexStr, jsonAsBytes)
@@ -100,13 +100,13 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeInterface, function string, ar
 	if err != nil {
 		return nil, err
 	}
-	
+	*/
 	return nil, nil
 }
 
 // Invoke isur entry point to invoke a chaincode function
-func (t *SimpleChaincode) Invoke(stub shim.ChaincodeInterface, function string, args []string) ([]byte, error) {							//		NEED TO ADD
-//func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {							//		NEED TO ADD
+func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	fmt.Println("invoke is running " + function)
 
 	// Handle different functions
@@ -123,8 +123,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeInterface, function string, 
 }
 
 // Query is our entry point for queries
-func (t *SimpleChaincode) Query(stub shim.ChaincodeInterface, function string, args []string) ([]byte, error) {
-//func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	fmt.Println("query is running " + function)
 
 	// Handle different functions
@@ -137,8 +137,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeInterface, function string, a
 }
 
 // write - invoke function to write key/value pair
-func (t *SimpleChaincode) write(stub shim.ChaincodeInterface, args []string) ([]byte, error) {
-//func (t *SimpleChaincode) write(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) write(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) write(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	var key, value string
 	var err error
 	fmt.Println("running write()")
@@ -157,8 +157,8 @@ func (t *SimpleChaincode) write(stub shim.ChaincodeInterface, args []string) ([]
 }
 
 // read - query function to read key/value pair
-func (t *SimpleChaincode) read(stub shim.ChaincodeInterface, args []string) ([]byte, error) {
-//func (t *SimpleChaincode) read(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) read(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	var key, jsonResp string
 	var err error
 
@@ -179,8 +179,8 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeInterface, args []string) ([]b
 // ============================================================================================================================
 // Delete - remove a key/value pair from state
 // ============================================================================================================================
-func (t *SimpleChaincode) Delete(stub shim.ChaincodeInterface, args []string) ([]byte, error) {												//NEED TO ADD FEW MORE STATE DELETE
-//func (t *SimpleChaincode) Delete(stub *shim.ChaincodeStub, args []string) ([]byte, error) {	
+//func (t *SimpleChaincode) Delete(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {												//NEED TO ADD FEW MORE STATE DELETE
+func (t *SimpleChaincode) Delete(stub *shim.ChaincodeStub, args []string) ([]byte, error) {	
 	if len(args) != 1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 1")
 	}
