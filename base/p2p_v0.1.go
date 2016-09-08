@@ -19,7 +19,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	"strconv"
+	//"strconv"
 	"encoding/json"
 	"time"
 	//"strings"
@@ -298,13 +298,13 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 		return nil, errors.New("Incorrect number of arguments. Expecting 5")
 	}
 
-	value, err := strconv.Atoi(args[1])
-	if err != nil {
-		return nil, errors.New("2nd argument must be a numeric string")
-	}
-	premium, err := strconv.Atoi(args[1])
+	value, err := strconv.Atoi(args[2])
 	if err != nil {
 		return nil, errors.New("3rd argument must be a numeric string")
+	}
+	premium, err := strconv.Atoi(args[3])
+	if err != nil {
+		return nil, errors.New("4th argument must be a numeric string")
 	}
 
 
@@ -323,7 +323,7 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 			risk.Premium  = premium
 			risk.Model  = 	args[4]
 			risk.status  = "Active"
-			group.Members[i].Risks = append(group.Members[i].Risks, risk)
+			group.Members[i].Risks = append(Members[i].Risks, risk)
 		}
 	}
 
