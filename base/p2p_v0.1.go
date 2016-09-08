@@ -19,10 +19,10 @@ package main
 import (
 	"errors"
 	"fmt"
-//	"strconv"
-//	"encoding/json"
-//	"time"
-//	"strings"
+	//"strconv"
+	"encoding/json"
+	//"time"
+	//"strings"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
@@ -65,6 +65,7 @@ type Member struct{
 }
 
 type Group struct{
+	Name 		string 		`json:"name"`
 	Members		[]Member 	`json:"members"`	 
 	RiskType	string		`json:"riskType"`	
 	Status		int 		`json:"status"`
@@ -101,6 +102,56 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 		return nil, err
 	}
 	*/
+
+	group := Group{}
+	member1 := Member{}
+	member2 := Member{}
+	risk1 := Risk{}
+	risk2 := Risk{}
+	
+	
+	risk1.Value  = 100									
+	risk1.Premium  = 10
+	risk1.Model  = 	"XYZ"
+	risk1.status  = "Active"	
+	
+	risk2.Value  = 	200								
+	risk2.Premium  = 20
+	risk2.Model  = 	"ABC"
+	risk2.status  = "Passive"
+	
+	member1.Name = "Veera"
+    member1.Email  = "veera.s@tcs.com"	
+    member1.Contact  = 9946476523
+    member1.HomeAddress	 = "Chennai"
+    member1.Dob		 = "20 Nov 93"
+    member1.Risks = append(member1.Risks, risk1)	
+    member1.Risks = append(member1.Risks, risk2)
+    
+    member2.Name = "Preeja"
+    member2.Email  = "preeja@tcs.com"	
+    member2.Contact  = 9852978345
+    member2.HomeAddress	 = "Kerala"
+    member2.Dob	 = 	"20 Sept 94"
+    member2.Risks = append(member2.Risks, risk2)
+    
+    group.Members = append(group.Members, member1)
+    group.Members = append(group.Members, member2)
+	group.RiskType = "Bicycle"
+	group.Status = 1
+	group.PoolBalance = 1000
+	group.Insurer = "JKL Insurance Company"
+	group.Name = "bi001"
+    
+
+
+	jsonAsBytes, _ := json.Marshal(group)
+
+	err = stub.PutState(group.Name, jsonAsBytes)				
+	if err != nil {
+		return nil, err
+	}
+
 	return nil, nil
 }
 
