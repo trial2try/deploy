@@ -21,7 +21,7 @@ import (
 	"fmt"
 	//"strconv"
 	"encoding/json"
-	//"time"
+	"time"
 	//"strings"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -38,11 +38,12 @@ func main() {
 	}
 }
 
-var GROUPINDEX = "_groupindex"													//name for the key/value that will store a list of all known groups
+var GROUPINDEX = "_bigroupindex"													//name for the key/value that will store a list of all known groups
 var UNCOVEREDGROUPINDEX = "_uncoveredgroupindex"								//name for the key/value that will store all un covered groups
 
 type Claim struct{
-	Amount 		int 		`json:"amount"`										//the fieldtags are needed to keep case from bouncing around
+	Claimed 	int 		`json:"claimed"`
+	Settled 	int 		`json:"settled"`										//the fieldtags are needed to keep case from bouncing around
 	Timestamp 	int64 		`json:"timestamp"`									//utc timestamp of creation
 	Type 		string 		`json:"type"`
 }
@@ -58,10 +59,11 @@ type Risk struct{
 type Member struct{
 	Name 		string 		`json:"name"`
     Email 		string 		`json:"email"`
-    Contact 	int 		`json:"contact"`
+    Contact 	string 		`json:"contact"`
     HomeAddress	string 		`json:"address"`
     Dob			string 		`json:"dob"`
     Risks 		[]Risk 		`json:"risks"`
+    Wallet 		int 		`json:"wallet"`
 }
 
 type Group struct{
@@ -83,18 +85,24 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	}
 
 	// Write the state to the ledger
-	err := stub.PutState("hello", []byte(args[0]))				//making a test var "abc", I find it handy to read/write to it right away to test the network
-	if err != nil {
-		return nil, err
-	}
-	/*
-	var empty []string
-	jsonAsBytes, _ := json.Marshal(empty)								//marshal an emtpy array of strings to clear the index
-	err = stub.PutState(marbleIndexStr, jsonAsBytes)
+	err := stub.PutState("hello", []byte(args[0]))				//making a test var "hello", I find it handy to read/write to it right away to test the network
 	if err != nil {
 		return nil, err
 	}
 	
+	var empty []string
+	empty[0] = "bi001"
+	empty[1] = "bi002"
+	empty[2] = "bi003"
+	empty[3] = "bi004"
+	empty[4] = "bi005"
+
+	jsonAsBytes, _ := json.Marshal(empty)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
+	err = stub.PutState(GROUPINDEX, jsonAsBytes)
+	if err != nil {
+		return nil, err
+	}
+	/*
 	var trades AllTrades
 	jsonAsBytes, _ = json.Marshal(trades)								//clear the open trade struct
 	err = stub.PutState(openTradesStr, jsonAsBytes)
@@ -106,9 +114,12 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	group := Group{}
 	member1 := Member{}
 	member2 := Member{}
+	member3 := Member{}
 	risk1 := Risk{}
 	risk2 := Risk{}
-	
+	risk3 := Risk{}
+	claim3 := Claim{}
+
 	
 	risk1.Value  = 100									
 	risk1.Premium  = 10
@@ -119,24 +130,49 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	risk2.Premium  = 20
 	risk2.Model  = 	"ABC"
 	risk2.status  = "Passive"
+
+	claim3.Claimed = 20
+	claim3.Settled = 20
+	claim3.Timestamp =  makeTimestamp()
+	claim3.Type = "Damage"
+
+	risk3.Value  = 250									
+	risk3.Premium  = 25
+	risk3.Model  = 	"PQR"
+	risk3.status  = "Active"
+	risk3.Claims = 	append(risk3.Claims, claim3)
+
 	
-	member1.Name = "Veera"
-    member1.Email  = "veera.s@tcs.com"	
-    member1.Contact  = 9946476523
-    member1.HomeAddress	 = "Chennai"
+	member1.Name = "John Snow"
+    member1.Email  = "johnsnow.s@gmail.com"	
+    member1.Contact  = "+1-541-754-3010"
+    member1.HomeAddress	 = "New York"
     member1.Dob		 = "20 Nov 93"
+    member1.Wallet = 1000
     member1.Risks = append(member1.Risks, risk1)	
     member1.Risks = append(member1.Risks, risk2)
     
-    member2.Name = "Preeja"
-    member2.Email  = "preeja@tcs.com"	
-    member2.Contact  = 9852978345
-    member2.HomeAddress	 = "Kerala"
+    member2.Name = "Thomas Buck"
+    member2.Email  = "thomas@gmail.com"	
+    member2.Contact  = "+1-541-754-5987"
+    member2.HomeAddress	 = "New Jersey"
     member2.Dob	 = 	"20 Sept 94"
+    member2.Wallet = 1450
     member2.Risks = append(member2.Risks, risk2)
+
+    member3.Name = "George Tent"
+    member3.Email  = "george@tcs.com"	
+    member3.Contact  = "+1-541-754-7811"
+    member3.HomeAddress	 = "Seattle"
+    member3.Dob	 = 	"20 Sept 94"
+    member3.Wallet = 1450
+    member3.Risks = append(member3.Risks, risk2)
+    member3.Risks = append(member3.Risks, risk3)
+
     
     group.Members = append(group.Members, member1)
     group.Members = append(group.Members, member2)
+    group.Members = append(group.Members, member3)
 	group.RiskType = "Bicycle"
 	group.Status = 1
 	group.PoolBalance = 1000
@@ -145,7 +181,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
     
 
 
-	jsonAsBytes, _ := json.Marshal(group)
+	jsonAsBytes, _ = json.Marshal(group)
 
 	err = stub.PutState(group.Name, jsonAsBytes)				
 	if err != nil {
@@ -244,3 +280,10 @@ func (t *SimpleChaincode) Delete(stub *shim.ChaincodeStub, args []string) ([]byt
 
 	return nil, nil
 }
+// ============================================================================================================================
+// Make Timestamp - create a timestamp in ms
+// ============================================================================================================================
+func makeTimestamp() int64 {
+    return time.Now().UnixNano() / (int64(time.Millisecond)/int64(time.Nanosecond))
+}
+
