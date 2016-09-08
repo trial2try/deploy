@@ -11,6 +11,40 @@ import (
 type SimpleChaincode struct {
 }
 
+var GROUPINDEX = "_groupindex"													//name for the key/value that will store a list of all known groups
+var UNCOVEREDGROUPINDEX = "_uncoveredgroupindex"								//name for the key/value that will store all un covered groups
+
+type Claim struct{
+	Amount 		int 		`json:"amount"`										//the fieldtags are needed to keep case from bouncing around
+	Timestamp 	int64 		`json:"timestamp"`									//utc timestamp of creation
+	Type 		string 		`json:"type"`
+}
+
+type Risk struct{
+	Value 		int 		`json:"value"`										
+	Premium 	int 		`json:"premium"`
+	Model 		string 		`json:"model"`
+	status 		string 		`json:"status"`
+	Claims 		[]Claim 	`json:"claims"`
+}
+
+type Member struct{
+	Name 		string 		`json:"name"`
+    Email 		string 		`json:"email"`
+    Contact 	int 		`json:"contact"`
+    HomeAddress	string 		`json:"address"`
+    Dob			string 		`json:"dob"`
+    Risks 		[]Risk 		`json:"risks"`
+}
+
+type Group struct{
+	Members		[]Member 	`json:"members"`	 
+	RiskType	string		`json:"riskType"`	
+	Status		int 		`json:"status"`
+	PoolBalance	int 		`json:"poolBalance"`
+	Insurer		string 		`json:"insurer"`
+}
+
 func main() {
 	err := shim.Start(new(SimpleChaincode))
 	if err != nil {
