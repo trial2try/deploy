@@ -91,11 +91,12 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	}
 	
 	var empty []string
-	empty[0] = "bi001"
-	empty[1] = "bi002"
-	empty[2] = "bi003"
-	empty[3] = "bi004"
-	empty[4] = "bi005"
+	empty = append(empty, "bi001")
+	empty = append(empty, "bi002")
+	empty = append(empty, "bi003")
+	empty = append(empty, "bi004")
+	empty = append(empty, "bi005")
+
 
 	jsonAsBytes, _ := json.Marshal(empty)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
 	err = stub.PutState(GROUPINDEX, jsonAsBytes)
