@@ -19,7 +19,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	//"strconv"
+	"strconv"
 	"encoding/json"
 	"time"
 	//"strings"
@@ -204,6 +204,8 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 		return t.write(stub, args)
 	} else if function == "delete" {
 		return t.Delete(stub, args)
+	} else if function == "add_risk"{
+		return t.AddRisk(stub, args)
 	}
 	fmt.Println("invoke did not find func: " + function)
 
@@ -281,6 +283,63 @@ func (t *SimpleChaincode) Delete(stub *shim.ChaincodeStub, args []string) ([]byt
 
 	return nil, nil
 }
+
+
+// ============================================================================================================================
+// Add - adds the given for a given group name and member
+// ============================================================================================================================
+//func (t *SimpleChaincode) AddRisk(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+
+	//args[0]		args[1]		args[2]	args[3]	args[4]	args[5]	args[6]
+	//groupname		membername	value 	premium model
+
+	if len(args) != 5 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 5")
+	}
+
+	value, err := strconv.Atoi(args[1])
+	if err != nil {
+		return nil, errors.New("2nd argument must be a numeric string")
+	}
+	premium, err := strconv.Atoi(args[1])
+	if err != nil {
+		return nil, errors.New("3rd argument must be a numeric string")
+	}
+
+
+	groupAsBytes, err := stub.GetState(args[0])							//Get the corresponding group
+	if err != nil {
+		return nil, errors.New("Failed to get group")
+	}
+
+	group := Group{}
+	json.Unmarshal(groupAsBytes, &group)
+
+	for i := range group.Members{					//Find the member
+		if group.Members[i].Name == args[1]{
+			risk := Risk{}
+			risk.Value  = value									
+			risk.Premium  = premium
+			risk.Model  = 	args[4]
+			risk.status  = "Active"
+			group.Members[i].Risks = append(group.Members[i].Risks, risk)
+		}
+	}
+
+	jsonAsBytes, _ := json.Marshal(group)
+
+	err = stub.PutState(group.Name, jsonAsBytes)				
+	if err != nil {
+		return nil, err
+	}
+
+	return nil,nil
+
+
+}
+
+
 // ============================================================================================================================
 // Make Timestamp - create a timestamp in ms
 // ============================================================================================================================
