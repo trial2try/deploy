@@ -19,7 +19,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	//"strconv"
+	"strconv"
 	"encoding/json"
 	"time"
 	//"strings"
@@ -323,7 +323,7 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 			risk.Premium  = premium
 			risk.Model  = 	args[4]
 			risk.status  = "Active"
-			group.Members[i].Risks = append(Members[i].Risks, risk)
+			group.Members[i].Risks = append(group.Members[i].Risks, risk)
 		}
 	}
 
