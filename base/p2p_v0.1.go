@@ -75,6 +75,15 @@ type Group struct{
 	Insurer		string 		`json:"insurer"`
 }
 
+type GroupInfo struct{
+	Name 		string 		`json:"name"`
+	Count 		int			`json:"count"`
+	RiskType	string		`json:"riskType"`	
+	Status		int 		`json:"status"`
+	PoolBalance	int 		`json:"poolBalance"`
+
+}
+
 
 // Init resets all the things
 //func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
@@ -220,6 +229,8 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
+	} else if function == "group_info" {
+		return t.getGroupInfo(stub, args)
 	}
 	fmt.Println("query did not find func: " + function)
 
@@ -265,6 +276,36 @@ func (t *SimpleChaincode) read(stub *shim.ChaincodeStub, args []string) ([]byte,
 
 	return valAsbytes, nil
 }
+//func (t *SimpleChaincode) getGroupInfo(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) getGroupInfo(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+	var key, jsonResp string
+	var err error
+
+	if len(args) != 1 {
+		return nil, errors.New("Incorrect number of arguments. Expecting name of the key to query")
+	}
+
+	key = args[0]
+	groupAsBytes, err := stub.GetState(key)
+	if err != nil {
+		jsonResp = "{\"Error\":\"Failed to get state for " + key + "\"}"
+		return nil, errors.New(jsonResp)
+	}
+	group := Group{}
+	json.Unmarshal(groupAsBytes, &group)
+
+	info := GroupInfo{}
+	info.Name =group.Name
+	info.Count =len(group.Members)
+	info.RiskType	=group.RiskType
+	info.Status	=group.Status
+	info.PoolBalance	= group.PoolBalance
+
+	valAsbytes, _ := json.Marshal(info)
+
+	return valAsbytes, nil
+}
+
 
 // ============================================================================================================================
 // Delete - remove a key/value pair from state
