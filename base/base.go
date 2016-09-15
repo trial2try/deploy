@@ -19,7 +19,7 @@ package main
 import (
 	"errors"
 	"fmt"
-	//"strconv"
+	"strconv"
 	"encoding/json"
 	"time"
 	//"strings"
@@ -44,9 +44,22 @@ func main() {
 var BICYCLE_GROUP_INDEX = "_bicycleindex"													//name for the key/value that will store a list of all bicycle groups
 var SMARTPHONE_GROUP_INDEX = "_smartphoneindex"
 var ID_CARD_GROUPINDEX = "_idcardindex"
-var BICYCLE = "Bicycle"
-var SMARTPHONE = "Smartphone"
-var IDCARD = "Idcard"
+
+var BICYCLE = "bicycle"
+var SMARTPHONE = "smartphone"
+var IDCARD = "idcard"
+
+var RISK_INDEX = "_risksindex"
+var MEMBER_INDEX = "_memebersindex"
+var CLAIM_INDEX = "_claimsindex"
+var INSURER_INDEX = "_insurersindex"
+
+/*	COUNTER VARIABLES	*/
+
+var riskCounter = 3
+var memberCounter = 3
+var insurerCounter = 1
+var claimCounter = 2
 /*	STRUCTURES PERSISTING IN BLOCKCHAIN	*/
 
 type Claim struct{
@@ -60,7 +73,7 @@ type Claim struct{
 
 type Risk struct{
 	Id 			string 		`json:"id"`
-	Value 		float64 		`json:"value"`										
+	Value 		float64 	`json:"value"`										
 	Premium 	float64		`json:"premium"`
 	Model 		string 		`json:"model"`
 	Type 		string 		`json:"type"`
@@ -77,7 +90,7 @@ type Member struct{
     HomeAddress	string 		`json:"address"`
     Dob			string 		`json:"dob"`
     RiskIds 	[]string 	`json:"riskids"`
-    Tokens 		float64 		`json:tokens`
+    Tokens 		float64 	`json:tokens`
 }
 
 type Group struct{
@@ -87,7 +100,8 @@ type Group struct{
 	Status		string 		`json:"status"`
 	PoolBalance	float64		`json:"poolBalance"`
 	InsurerId	string 		`json:"insurer"`
-	CreatedDate int64 		`json:"timestamp"`
+	CreatedDate int64 		`json:"createddate"`
+	EndDate 	int64 		`json:"enddate"`
 }
 
 type Insurer struct{
@@ -126,24 +140,58 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	}
 	
 	var bicycleInit []string
-	bicycleInit = append(bicycleInit, "BI001")
-	bicycleInit = append(bicycleInit, "BI002")
-	bicycleInit = append(bicycleInit, "BI003")
-	bicycleInit = append(bicycleInit, "BI004")
+	bicycleInit = append(bicycleInit, "bi001")
+	bicycleInit = append(bicycleInit, "bi002")
+	bicycleInit = append(bicycleInit, "bi003")
+	bicycleInit = append(bicycleInit, "bi004")
 
 	jsonAsBytes, _ := json.Marshal(bicycleInit)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
 	err = stub.PutState(BICYCLE_GROUP_INDEX, jsonAsBytes)
 	if err != nil {
 		return nil, err
 	}
-	/*
-	var trades AllTrades
-	jsonAsBytes, _ = json.Marshal(trades)								//clear the open trade struct
-	err = stub.PutState(openTradesStr, jsonAsBytes)
+
+	var riskInit []string
+	riskInit = append(riskInit, "rid001")
+	riskInit = append(riskInit, "rid002")
+	riskInit = append(riskInit, "rid003")
+
+	jsonAsBytes, _ = json.Marshal(riskInit)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
+	err = stub.PutState(RISK_INDEX, jsonAsBytes)
 	if err != nil {
 		return nil, err
 	}
-	*/
+
+	var memberInit []string
+	memberInit = append(memberInit, "uid001")
+	memberInit = append(memberInit, "uid002")
+	memberInit = append(memberInit, "uid003")
+
+	jsonAsBytes, _ = json.Marshal(memberInit)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
+	err = stub.PutState(MEMBER_INDEX, jsonAsBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	var claimInit []string
+	claimInit = append(claimInit, "cid001")
+	claimInit = append(claimInit, "cid002")
+
+	jsonAsBytes, _ = json.Marshal(claimInit)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
+	err = stub.PutState(CLAIM_INDEX, jsonAsBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	var insurerInit []string
+	insurerInit = append(insurerInit, "ins001")
+
+	jsonAsBytes, _ = json.Marshal(insurerInit)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
+	err = stub.PutState(INSURER_INDEX, jsonAsBytes)
+	if err != nil {
+		return nil, err
+	}
+
 
 	group1 := Group{}
 	group2 := Group{}
@@ -159,46 +207,46 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	claim2 := Claim{}
 	insurer := Insurer{}
 
-	claim1.Id = "CID001"
-	claim1.RiskId = "RID002"
+	claim1.Id = "cid001"
+	claim1.RiskId = "rid002"
 	claim1.Claimed = 40
 	claim1.Timestamp = makeTimestamp()
-	claim1.Type = "Damage"
+	claim1.Type = "damage"
     
-	claim2.Id = "CID002"
-	claim2.RiskId = "RID003"
+	claim2.Id = "cid002"
+	claim2.RiskId = "rid003"
 	claim2.Claimed = 200
 	claim2.Settled = 200
 	claim2.Timestamp = makeTimestamp()
-	claim2.Type = "Theft"
+	claim2.Type = "theft"
 
-	risk1.Id = "RID001"
+	risk1.Id = "rid001"
 	risk1.Value = 100
 	risk1.Premium = 12
 	risk1.Model = "XYZ"
 	risk1.Type = BICYCLE
-	risk1.Status = "Active"
-	risk1.OwnerId = "UID002"
+	risk1.Status = "covered"
+	risk1.OwnerId = "uid002"
 
-	risk2.Id = "RID002"
+	risk2.Id = "rid002"
 	risk2.Value = 250
 	risk2.Premium = 25
 	risk2.Model = "PQR"
 	risk2.Type = BICYCLE
-	risk2.Status = "Active"
-	risk2.OwnerId = "UID003"
+	risk2.Status = "covered"
+	risk2.OwnerId = "uid003"
 	risk2.ClaimIds = append(risk2.ClaimIds, claim1.Id)
 
-	risk3.Id = "RID003"
+	risk3.Id = "rid003"
 	risk3.Value = 200
 	risk3.Premium = 20
 	risk3.Model = "ABC"
 	risk3.Type = BICYCLE
-	risk3.Status = "Active"
-	risk3.OwnerId = "UID001"
+	risk3.Status = "covered"
+	risk3.OwnerId = "uid001"
 	risk3.ClaimIds = append(risk3.ClaimIds, claim2.Id)
 
-	member1.UserId = "UID001"
+	member1.UserId = "uid001"
 	member1.Name = "John Snow"
 	member1.Email = "johnsnow.s@gmail.com"	
 	member1.Contact = "+1-541-754-3010"
@@ -207,7 +255,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	member1.RiskIds = append(member1.RiskIds, risk3.Id)
 	member1.Tokens = 1000
 
-	member2.UserId = "UID002"
+	member2.UserId = "uid002"
 	member2.Name = "Thomas Buck"
 	member2.Email = "thomas@gmail.com"	
 	member2.Contact = "+1-541-754-5987"
@@ -216,7 +264,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	member2.RiskIds = append(member2.RiskIds, risk1.Id)
 	member2.Tokens = 1200
 
-	member3.UserId = "UID003"
+	member3.UserId = "uid003"
 	member3.Name = "George Tent"
 	member3.Email = "george@gmail.com"
 	member3.Contact = "+1-541-754-7811"
@@ -225,51 +273,54 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	member3.RiskIds = append(member3.RiskIds, risk2.Id)
 	member3.Tokens = 1450
 
-	insurer.Id = "INS001"
+	insurer.Id = "ins001"
 	insurer.Name = "JKL Insurance"
 	insurer.Tokens = 13840
 	
 
-	group1.Name = "BI001"
+	group1.Name = "bi001"
 	group1.RiskIds = append(group1.RiskIds, risk1.Id)
 	group1.RiskIds = append(group1.RiskIds, risk2.Id)
 	group1.RiskIds = append(group1.RiskIds, risk3.Id)
 	group1.RiskType = BICYCLE
-	group1.Status = "Open"
+	group1.Status = "open"
 	group1.PoolBalance = 39.5
-	group1.InsurerId = "INS001"
+	group1.InsurerId = "ins001"
 	group1.CreatedDate =  makeTimestamp()
+	group1.EndDate = 1506752393
 
-	group2.Name = "BI002"
+	group2.Name = "bi002"
 	for j :=0; j < 5; j++ {
 		group2.RiskIds = append(group2.RiskIds, "dummyRisk")		
 	}
 	group2.RiskType = BICYCLE
-	group2.Status = "Open"
+	group2.Status = "open"
 	group2.PoolBalance = 45.6
-	group2.InsurerId = "INS005"
-	group2.CreatedDate = makeTimestamp() + 60000000
+	group2.InsurerId = "ins005"
+	group2.CreatedDate = makeTimestamp() - 60000000
+	group2.EndDate = 1506752393 - 60000000
 
-	group3.Name = "BI003"
+	group3.Name = "bi003"
 	for j :=0; j < 8; j++ {
 		group3.RiskIds = append(group3.RiskIds, "dummyRisk")		
 	}
 	group3.RiskType = BICYCLE
-	group3.Status = "Closed"
+	group3.Status = "closed"
 	group3.PoolBalance = 67.2
-	group3.InsurerId = "INS003"
-	group3.CreatedDate = makeTimestamp() + 120000000
-
-	group4.Name = "BI004"
+	group3.InsurerId = "ins003"
+	group3.CreatedDate = makeTimestamp() - 120000000
+	group3.EndDate = 1506752393 - 120000000
+	
+	group4.Name = "bi004"
 	for j :=0; j < 8; j++ {
 		group4.RiskIds = append(group4.RiskIds, "dummyRisk")		
 	}
 	group4.RiskType = BICYCLE
-	group4.Status = "Closed"
+	group4.Status = "closed"
 	group4.PoolBalance = 23.7
-	group4.InsurerId = "INS002"
-	group4.CreatedDate = makeTimestamp() + 90000000
-	    
+	group4.InsurerId = "ins002"
+	group4.CreatedDate = makeTimestamp() - 90000000
+	group4.EndDate = 1506752393 - 90000000   
 
 	/*Persisting Groups*/
 	jsonAsBytes, _ = json.Marshal(group1)
@@ -348,9 +399,9 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	return nil, nil
 }
 // ============================================================================================================================
-// Invoke - The entry point to invoke a chaincode function	
+// Invoke - The entry point to invoke a chaincode function
 // ============================================================================================================================
-//func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {	
+//func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {		
 func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	fmt.Println("invoke is running " + function)
 
@@ -361,6 +412,12 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 		return t.write(stub, args)
 	} else if function == "delete" {
 		return t.Delete(stub, args)
+	} else if function == "create_risk" {
+		return t.CreateRisk(stub, args)
+	} else if function == "add_risk" {
+	
+	} else if function == "raise_claim" {
+	
 	}
 	fmt.Println("invoke did not find func: " + function)
 
@@ -376,7 +433,15 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
-	} 
+	} else if function == "getGroupInfo"{
+
+	} else if function == "getGroupMembers"{
+
+	} else if function == "getGroupRisks"{
+
+	} else if function == ""{
+
+	}
 	fmt.Println("query did not find func: " + function)
 
 	return nil, errors.New("Received unknown function query")
@@ -443,7 +508,57 @@ func (t *SimpleChaincode) Delete(stub *shim.ChaincodeStub, args []string) ([]byt
 
 
 /*	USER DEFINED FUNCTIONS	*/
+// ============================================================================================================================
+/* 
+CreateRisk - Invoke function to create a new risk write key/value pair
+Inputs: 	args[0]		args[1]	args[2]		args[3]
+			value 		model 	type 		owner
+			"100" 		"XYZ" 	"bicycle" 	
+*/
+// ============================================================================================================================
+//func (t *SimpleChaincode) CreateRisk(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) CreateRisk(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+	fmt.Println("running CreateRisk()")
 
+	if len(args) != 4 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 2. name of the key and value to set")
+	}
+
+	value, err := strconv.ParseFloat(args[0], 64)
+	if err != nil {
+		return nil, errors.New("1st argument must be a numeric string")
+	}
+
+	risk := Risk{}
+	risk.Id = makeRiskId()
+	risk.Value = value
+	//risk.Premium = 12 											// Should be given at the period of joining a group
+	risk.Model = args[1]
+	risk.Type = args[2]
+	risk.Status = "uncovered" 										// Should be changed active when joining a group
+	risk.OwnerId = args[3]
+
+	jsonAsBytes, _ := json.Marshal(risk)
+	err = stub.PutState(risk.Id, jsonAsBytes)				
+	if err != nil {
+		return nil, err
+	}
+
+	riskIndexAsBytes, err := stub.GetState(RISK_INDEX)
+	if err != nil {
+		return nil, errors.New("Failed to get risk index")
+	}
+
+	var riskIndex []string
+	json.Unmarshal(riskIndexAsBytes, &riskIndex)								//un stringify it aka JSON.parse()
+	
+	//append
+	riskIndex = append(riskIndex, risk.Id)										//add risk id to index list
+	fmt.Println("! risk index: ", riskIndex)
+	jsonAsBytes, _ = json.Marshal(riskIndex)
+	err = stub.PutState(RISK_INDEX, jsonAsBytes)						//store risk id of risk
+	return nil, nil
+}
 
 /*	UTILITY FUNCTIONS	*/
 
@@ -454,3 +569,18 @@ func makeTimestamp() int64 {
     return time.Now().UnixNano() / (int64(time.Millisecond)/int64(time.Nanosecond))
 }
 
+func stringInSlice(a string, list []string) bool {
+    for _, b := range list {
+        if b == a {
+            return true
+        }
+    }
+    return false
+}
+
+func makeRiskId() string {
+	riskCounter = riskCounter+1
+	id :="RID00"+strconv.Itoa(riskCounter)
+	return id
+
+}
