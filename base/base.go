@@ -412,7 +412,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	insurerCounter = 1
 	claimCounter = 2
 	bicycleCounter = 4
-	fmt.Println("debug done init")
+
 	return nil, nil
 }
 // ============================================================================================================================
@@ -491,7 +491,7 @@ func (t *SimpleChaincode) write(stub *shim.ChaincodeStub, args []string) ([]byte
 func (t *SimpleChaincode) read(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	var key, jsonResp string
 	var err error
-	fmt.Println("Read running for ",args[0])
+
 	if len(args) != 1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting name of the key to query")
 	}
@@ -502,7 +502,7 @@ func (t *SimpleChaincode) read(stub *shim.ChaincodeStub, args []string) ([]byte,
 		jsonResp = "{\"Error\":\"Failed to get state for " + key + "\"}"
 		return nil, errors.New(jsonResp)
 	}
-	fmt.Println("Got",valAsbytes)
+
 	return valAsbytes, nil
 }
 // ============================================================================================================================
@@ -605,7 +605,7 @@ Inputs: 	args[0]		args[1]		args[2]
 func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	fmt.Println("running AddRisk()")
 
-	if len(args) != 4 {
+	if len(args) != 3 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 3.")
 	}
 
@@ -766,19 +766,20 @@ grp-size  pool  fees  insurer
 func getPremiumPercentages(size int) []float64{
 	var percentages []float64
 	if size < 20 {
-
-	} else if size >= 20 && size <40{
 		percentages = append(percentages, 0.25)										//pool share
 		percentages = append(percentages, 0.70)										//insurer share
-	} else if size >= 40 && size <60{
+	} else if size >= 20 && size <40{
 		percentages = append(percentages, 0.30)
 		percentages = append(percentages, 0.65)
-	} else if size >= 60 && size <70{
+	} else if size >= 40 && size <60{
 		percentages = append(percentages, 0.35)
 		percentages = append(percentages, 0.60)
-	} else if size >= 80 && size <100{
+	} else if size >= 60 && size <70{
 		percentages = append(percentages, 0.40)
 		percentages = append(percentages, 0.55)
+	} else if size >= 80 && size <100{
+		percentages = append(percentages, 0.45)
+		percentages = append(percentages, 0.50)
 	} else if size >= 100{
 		percentages = append(percentages, 0.50)
 		percentages = append(percentages, 0.45)
