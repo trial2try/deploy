@@ -53,6 +53,7 @@ var RISK_INDEX = "_risksindex"
 var MEMBER_INDEX = "_memebersindex"
 var CLAIM_INDEX = "_claimsindex"
 var INSURER_INDEX = "_insurersindex"
+var ADMIN_FEE ="_adminfee"
 
 /*	COUNTER VARIABLES	*/
 
@@ -60,6 +61,8 @@ var riskCounter = 3
 var memberCounter = 3
 var insurerCounter = 1
 var claimCounter = 2
+var bicycleCounter = 4
+
 /*	STRUCTURES PERSISTING IN BLOCKCHAIN	*/
 
 type Claim struct{
@@ -138,6 +141,12 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	if err != nil {
 		return nil, err
 	}
+
+	err = stub.PutState(ADMIN_FEE, []byte(strconv.FormatFloat(0, 'E', -1, 64)));
+		if err != nil {
+			return nil, errors.New("Billing account cannot be created")
+	}
+	
 	
 	var bicycleInit []string
 	bicycleInit = append(bicycleInit, "bi001")
@@ -396,6 +405,14 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	if err != nil {
 		return nil, err
 	}
+
+	/*	Initialize counter variable	*/
+	riskCounter = 3
+	memberCounter = 3
+	insurerCounter = 1
+	claimCounter = 2
+	bicycleCounter = 4
+
 	return nil, nil
 }
 // ============================================================================================================================
@@ -415,7 +432,7 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 	} else if function == "create_risk" {
 		return t.CreateRisk(stub, args)
 	} else if function == "add_risk" {
-	
+		return t.AddRisk(stub, args)
 	} else if function == "raise_claim" {
 	
 	}
@@ -521,7 +538,7 @@ func (t *SimpleChaincode) CreateRisk(stub *shim.ChaincodeStub, args []string) ([
 	fmt.Println("running CreateRisk()")
 
 	if len(args) != 4 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 2. name of the key and value to set")
+		return nil, errors.New("Incorrect number of arguments. Expecting 4. ")
 	}
 
 	value, err := strconv.ParseFloat(args[0], 64)
@@ -557,9 +574,139 @@ func (t *SimpleChaincode) CreateRisk(stub *shim.ChaincodeStub, args []string) ([
 	fmt.Println("! risk index: ", riskIndex)
 	jsonAsBytes, _ = json.Marshal(riskIndex)
 	err = stub.PutState(RISK_INDEX, jsonAsBytes)						//store risk id of risk
+
+	//Get Member
+	memberAsBytes, err := stub.GetState(risk.OwnerId)
+	if err != nil {
+		return nil, errors.New("Failed to get member")
+	}
+	member := Member{}
+	json.Unmarshal(memberAsBytes, &member)
+
+	member.RiskIds = append(member.RiskIds, risk.Id)
+	jsonAsBytes, _ = json.Marshal(member)
+	err = stub.PutState(member.UserId, jsonAsBytes)				
+	if err != nil {
+		return nil, err
+	}
+
 	return nil, nil
 }
 
+// ============================================================================================================================
+/* 
+AddRisk - Invoke function to create a new risk write key/value pair
+Inputs: 	args[0]		args[1]		args[2]		
+			riskid 		groupid 	premium 	
+			"rid002"	"bi002"		"10" 	
+*/
+// ============================================================================================================================
+//func (t *SimpleChaincode) AddRisk(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+	fmt.Println("running AddRisk()")
+
+	if len(args) != 4 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 3.")
+	}
+
+	premium, err := strconv.ParseFloat(args[2], 64)
+	if err != nil {
+		return nil, errors.New("3rd argument must be a numeric string")
+	}
+	//Get Risk
+	riskAsBytes, err := stub.GetState(args[0])
+	if err != nil {
+		return nil, errors.New("Failed to get risk")
+	}
+	risk := Risk{}
+	json.Unmarshal(riskAsBytes, &risk)								//un stringify it aka JSON.parse()
+
+	//Get Member
+	memberAsBytes, err := stub.GetState(risk.OwnerId)
+	if err != nil {
+		return nil, errors.New("Failed to get member")
+	}
+	member := Member{}
+	json.Unmarshal(memberAsBytes, &member)
+
+	if member.Tokens-premium > 0.0 {
+
+		//Get Group
+		groupAsBytes, err := stub.GetState(args[1])
+		if err != nil {
+			return nil, errors.New("Failed to get group")
+		}
+		group := Group{}
+		json.Unmarshal(groupAsBytes, &group)
+
+		if group.RiskType != risk.Type{
+			return nil, errors.New("Can't add "+risk.Type+" risk to group of "+group.RiskType)	
+		}
+	
+		//Get Insurer
+		insurerAsBytes, err := stub.GetState(group.InsurerId)
+		if err != nil {
+			return nil, errors.New("Failed to get group")
+		}
+		insurer := Insurer{}
+		json.Unmarshal(insurerAsBytes, &insurer)
+		//Get Admin Account
+		value, err := stub.GetState(ADMIN_FEE)
+		if err != nil {
+			jsonResp := "{\"Error\":\"Failed to get state for " + ADMIN_FEE + "\"}"
+			return nil, errors.New(jsonResp)
+		}
+		previous_val, _ := strconv.ParseFloat(string(value), 64)
+
+		var percentage []float64 
+		percentage = getPremiumPercentages(len(group.RiskIds))
+
+		risk.Premium = 	premium											// Premium calculated at the time of risk added to group
+		risk.Status = "covered" 										// risk is insured 
+		//append risk to group
+		group.RiskIds = append(group.RiskIds, risk.Id)
+		fmt.Println("! risk "+risk.Id+"added to group: ", group.Name)
+		group.PoolBalance = group.PoolBalance + premium * percentage[0]						// premium * pool share %
+		member.Tokens = member.Tokens-premium
+		insurer.Tokens = insurer.Tokens + premium * percentage[1] 						// premium * insurer share %
+		
+
+		//Update Member
+		jsonAsBytes, _ := json.Marshal(member)
+		err = stub.PutState(member.UserId, jsonAsBytes)				
+		if err != nil {
+			return nil, err
+		}
+		//Update Risk
+		jsonAsBytes, _ = json.Marshal(risk)
+		err = stub.PutState(risk.Id, jsonAsBytes)				
+		if err != nil {
+			return nil, err
+		}
+		//Update Group
+		jsonAsBytes, _ = json.Marshal(group)
+		err = stub.PutState(group.Name, jsonAsBytes)
+		if err != nil {
+			return nil, err
+		}
+		//Update Insurer
+		jsonAsBytes, _ = json.Marshal(insurer)
+		err = stub.PutState(insurer.Id, jsonAsBytes)				
+		if err != nil {
+			return nil, err
+		}
+		//Update Admin Account
+		err = stub.PutState(ADMIN_FEE, []byte(strconv.FormatFloat(previous_val+risk.Premium-group.PoolBalance-insurer.Tokens, 'E', -1, 64)));
+		if err != nil {
+			return nil, errors.New("Billing account not updated")
+		}
+
+	}else{
+		return nil,  errors.New("Not enough funds for"+ member.UserId)
+	}
+
+	return nil, nil
+}
 /*	UTILITY FUNCTIONS	*/
 
 // ============================================================================================================================
@@ -580,7 +727,63 @@ func stringInSlice(a string, list []string) bool {
 
 func makeRiskId() string {
 	riskCounter = riskCounter+1
-	id :="RID00"+strconv.Itoa(riskCounter)
+	id :="rid00"+strconv.Itoa(riskCounter)
 	return id
-
 }
+
+func makeMemberId() string {
+	memberCounter = memberCounter+1
+	id :="uid00"+strconv.Itoa(memberCounter)
+	return id
+}
+
+func makeClaimId() string {
+	claimCounter = claimCounter+1
+	id :="cid00"+strconv.Itoa(claimCounter)
+	return id
+}
+
+func makeInsurerId() string {
+	insurerCounter = insurerCounter+1
+	id :="ins00"+strconv.Itoa(insurerCounter)
+	return id
+}
+
+func makeBicycleId() string {
+	bicycleCounter = bicycleCounter+1
+	id :="bi00"+strconv.Itoa(bicycleCounter)
+	return id
+}
+/*
+grp-size  pool  fees  insurer
+   < 20       25%   5%    70% 
+ 20-39       30%   5%    65%
+ 40-59       35%   5%    60%
+ 60-79       40%   5%    55%
+ 80-99       45%   5%    50%
+ > 100       50%   5%    45%
+*/
+func getPremiumPercentages(size int) []float64{
+	var percentages []float64
+	if size < 20 {
+
+	} else if size >= 20 && size <40{
+		percentages = append(percentages, 0.25)										//pool share
+		percentages = append(percentages, 0.70)										//insurer share
+	} else if size >= 40 && size <60{
+		percentages = append(percentages, 0.30)
+		percentages = append(percentages, 0.65)
+	} else if size >= 60 && size <70{
+		percentages = append(percentages, 0.35)
+		percentages = append(percentages, 0.60)
+	} else if size >= 80 && size <100{
+		percentages = append(percentages, 0.40)
+		percentages = append(percentages, 0.55)
+	} else if size >= 100{
+		percentages = append(percentages, 0.50)
+		percentages = append(percentages, 0.45)
+	}
+
+	return percentages
+
+} 
