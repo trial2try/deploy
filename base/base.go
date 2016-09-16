@@ -412,7 +412,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	insurerCounter = 1
 	claimCounter = 2
 	bicycleCounter = 4
-
+	fmt.Println("debug done init")
 	return nil, nil
 }
 // ============================================================================================================================
@@ -491,7 +491,7 @@ func (t *SimpleChaincode) write(stub *shim.ChaincodeStub, args []string) ([]byte
 func (t *SimpleChaincode) read(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	var key, jsonResp string
 	var err error
-
+	fmt.Println("Read running for ",args[0])
 	if len(args) != 1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting name of the key to query")
 	}
@@ -502,7 +502,7 @@ func (t *SimpleChaincode) read(stub *shim.ChaincodeStub, args []string) ([]byte,
 		jsonResp = "{\"Error\":\"Failed to get state for " + key + "\"}"
 		return nil, errors.New(jsonResp)
 	}
-
+	fmt.Println("Got",valAsbytes)
 	return valAsbytes, nil
 }
 // ============================================================================================================================
