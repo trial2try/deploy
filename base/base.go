@@ -68,8 +68,8 @@ var bicycleCounter = 4
 type Claim struct{
 	Id 			string 		`json:"id"`
 	RiskId 		string 		`json:"riskid"`
-	Claimed 	int 		`json:"claimed"`
-	Settled 	int 		`json:"settled"`												//the fieldtags are needed to keep case from bouncing around
+	Claimed 	float64		`json:"claimed"`
+	Settled 	float64		`json:"settled"`												//the fieldtags are needed to keep case from bouncing around
 	Timestamp 	int64 		`json:"timestamp"`												//utc timestamp of creation
 	Type 		string 		`json:"type"`
 }
@@ -218,14 +218,14 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 
 	claim1.Id = "cid001"
 	claim1.RiskId = "rid002"
-	claim1.Claimed = 40
+	claim1.Claimed = 40.0
 	claim1.Timestamp = makeTimestamp()
 	claim1.Type = "damage"
     
 	claim2.Id = "cid002"
 	claim2.RiskId = "rid003"
-	claim2.Claimed = 200
-	claim2.Settled = 200
+	claim2.Claimed = 200.0
+	claim2.Settled = 200.0
 	claim2.Timestamp = makeTimestamp()
 	claim2.Type = "theft"
 
@@ -434,7 +434,7 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 	} else if function == "add_risk" {
 		return t.AddRisk(stub, args)
 	} else if function == "raise_claim" {
-	
+		return t.RaiseClaim(stub, args)
 	}
 	fmt.Println("invoke did not find func: " + function)
 
@@ -650,7 +650,7 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 		}
 		insurer := Insurer{}
 		json.Unmarshal(insurerAsBytes, &insurer)
-		//Get Admin Account
+		//Get Admin Account Fee
 		value, err := stub.GetState(ADMIN_FEE)
 		if err != nil {
 			jsonResp := "{\"Error\":\"Failed to get state for " + ADMIN_FEE + "\"}"
@@ -707,6 +707,83 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 
 	return nil, nil
 }
+
+// ============================================================================================================================
+/* 
+RaiseClaim - Invoke function to raise a new claim write key/value pair
+Inputs: 	args[0]		args[1]		args[2]
+			riskId 		claimed 	type
+			"ri004"		"15.5" 		"damage" 	
+*/
+// ============================================================================================================================
+//func (t *SimpleChaincode) RaiseClaim(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) RaiseClaim(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+	fmt.Println("running RaiseClaim()")
+
+	if len(args) != 3 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 3. ")
+	}
+
+	claimedAmount, err := strconv.ParseFloat(args[1], 64)
+	if err != nil {
+		return nil, errors.New("2nd argument must be a numeric string")
+	}
+
+	//Get Risk
+	riskAsBytes, err := stub.GetState(args[0])
+	if err != nil {
+		return nil, errors.New("Failed to get risk")
+	}
+	risk := Risk{}
+	json.Unmarshal(riskAsBytes, &risk)								//un stringify it aka JSON.parse()
+
+	if claimedAmount > risk.Value {
+		return nil, errors.New("Claimed value cannot be greater than risk value ")
+	}
+
+	claim := Claim{}
+	claim.Id = makeClaimId()
+	claim.RiskId = args[0]
+	claim.Claimed = claimedAmount
+	//claim.Settled =												//Will be updated when claim is settled
+	claim.Timestamp = makeTimestamp()
+	claim.Type = args[2]
+
+
+	//Put claim in chain
+	jsonAsBytes, _ := json.Marshal(claim)
+	err = stub.PutState(claim.Id, jsonAsBytes)				
+	if err != nil {
+		return nil, err
+	}
+
+	//Get chainIndex
+	claimIndexAsBytes, err := stub.GetState(CLAIM_INDEX)
+	if err != nil {
+		return nil, errors.New("Failed to get claim index")
+	}
+
+	var claimIndex []string
+	json.Unmarshal(claimIndexAsBytes, &claimIndex)								//un stringify it aka JSON.parse()
+	
+	//append
+	claimIndex = append(claimIndex, claim.Id)										//add chain id to index list
+	fmt.Println("! claim index: ", claimIndex)
+	jsonAsBytes, _ = json.Marshal(claimIndex)
+	//Update chainIndex in chain
+	err = stub.PutState(CLAIM_INDEX, jsonAsBytes)								//store chain id of risk
+
+	risk.ClaimIds = append(risk.ClaimIds, claim.Id)
+	
+	jsonAsBytes, _ = json.Marshal(risk)
+	err = stub.PutState(risk.Id, jsonAsBytes)				
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
 /*	UTILITY FUNCTIONS	*/
 
 // ============================================================================================================================
