@@ -491,7 +491,7 @@ func (t *SimpleChaincode) write(stub *shim.ChaincodeStub, args []string) ([]byte
 func (t *SimpleChaincode) read(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	var key, jsonResp string
 	var err error
-
+	fmt.Println("Read running for ",args[0])
 	if len(args) != 1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting name of the key to query")
 	}
@@ -696,7 +696,7 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 			return nil, err
 		}
 		//Update Admin Account
-		err = stub.PutState(ADMIN_FEE, []byte(strconv.FormatFloat(previous_val+risk.Premium-group.PoolBalance-insurer.Tokens, 'E', -1, 64)));
+		err = stub.PutState(ADMIN_FEE, []byte(strconv.FormatFloat(previous_val + risk.Premium- premium * percentage[0]-premium * percentage[1], 'E', -1, 64)));
 		if err != nil {
 			return nil, errors.New("Billing account not updated")
 		}
