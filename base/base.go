@@ -97,14 +97,15 @@ type Member struct{
 }
 
 type Group struct{
-	Name 		string 		`json:"name"`
-	RiskIds		[]string 	`json:"riskids"`	 
-	RiskType	string		`json:"riskType"`	
-	Status		string 		`json:"status"`
-	PoolBalance	float64		`json:"poolBalance"`
-	InsurerId	string 		`json:"insurer"`
-	CreatedDate int64 		`json:"createddate"`
-	EndDate 	int64 		`json:"enddate"`
+	Name 		 string 	`json:"name"`
+	RiskIds		 []string 	`json:"riskids"`	 
+	RiskType	 string		`json:"riskType"`	
+	Status		 string 	`json:"status"`
+	PoolBalance	 float64	`json:"poolBalance"`
+	InsurerId	 string 	`json:"insurer"`
+	CreatedDate  int64 	`json:"createddate"`
+	EndDate 	 int64 	`json:"enddate"`
+	GroupPremium float64	`json:"groupPremium"`
 }
 
 type Insurer struct{
@@ -297,6 +298,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	group1.InsurerId = "ins001"
 	group1.CreatedDate =  makeTimestamp()
 	group1.EndDate = 1506752393
+	group1.GroupPremium = 25
 
 	group2.Name = "bi002"
 	for j :=0; j < 5; j++ {
@@ -308,6 +310,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	group2.InsurerId = "ins005"
 	group2.CreatedDate = makeTimestamp() - 60000000
 	group2.EndDate = 1506752393 - 60000000
+	group2.GroupPremium = 30
 
 	group3.Name = "bi003"
 	for j :=0; j < 8; j++ {
@@ -319,7 +322,8 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	group3.InsurerId = "ins003"
 	group3.CreatedDate = makeTimestamp() - 120000000
 	group3.EndDate = 1506752393 - 120000000
-	
+	group3.GroupPremium = 24;
+
 	group4.Name = "bi004"
 	for j :=0; j < 8; j++ {
 		group4.RiskIds = append(group4.RiskIds, "dummyRisk")		
@@ -330,6 +334,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	group4.InsurerId = "ins002"
 	group4.CreatedDate = makeTimestamp() - 90000000
 	group4.EndDate = 1506752393 - 90000000   
+	group4.GroupPremium = 28;
 
 	/*Persisting Groups*/
 	jsonAsBytes, _ = json.Marshal(group1)
@@ -596,23 +601,24 @@ func (t *SimpleChaincode) CreateRisk(stub *shim.ChaincodeStub, args []string) ([
 // ============================================================================================================================
 /* 
 AddRisk - Invoke function to create a new risk write key/value pair
-Inputs: 	args[0]		args[1]		args[2]		
-			riskid 		groupid 	premium 	
-			"rid002"	"bi002"		"10" 	
+Inputs: 	args[0]		args[1]		
+			riskid 		groupid 	 	
+			"rid002"	"bi002"			
 */
 // ============================================================================================================================
 //func (t *SimpleChaincode) AddRisk(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	fmt.Println("running AddRisk()")
 
-	if len(args) != 3 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 3.")
+	if len(args) != 2 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 2.")
 	}
 
-	premium, err := strconv.ParseFloat(args[2], 64)
+	/*premium, err := strconv.ParseFloat(args[2], 64)
 	if err != nil {
 		return nil, errors.New("3rd argument must be a numeric string")
-	}
+	}*/
+
 	//Get Risk
 	riskAsBytes, err := stub.GetState(args[0])
 	if err != nil {
@@ -620,6 +626,8 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 	}
 	risk := Risk{}
 	json.Unmarshal(riskAsBytes, &risk)								//un stringify it aka JSON.parse()
+
+
 
 	//Get Member
 	memberAsBytes, err := stub.GetState(risk.OwnerId)
@@ -629,15 +637,16 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 	member := Member{}
 	json.Unmarshal(memberAsBytes, &member)
 
-	if member.Tokens-premium > 0.0 {
 
-		//Get Group
+	//Get Group
 		groupAsBytes, err := stub.GetState(args[1])
 		if err != nil {
 			return nil, errors.New("Failed to get group")
 		}
 		group := Group{}
 		json.Unmarshal(groupAsBytes, &group)
+
+	if member.Tokens-group.GroupPremium > 0.0 {
 
 		if group.RiskType != risk.Type{
 			return nil, errors.New("Can't add "+risk.Type+" risk to group of "+group.RiskType)	
@@ -657,6 +666,13 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 			return nil, errors.New(jsonResp)
 		}
 		previous_val, _ := strconv.ParseFloat(string(value), 64)
+
+		var premium float64
+		var timestamp int64
+
+		timestamp = makeTimestamp();
+
+		premium = group.GroupPremium * float64((findTimeStampDiff(group.EndDate,timestamp)/findTimeStampDiff(group.EndDate,group.CreatedDate)));
 
 		var percentage []float64 
 		percentage = getPremiumPercentages(len(group.RiskIds))
@@ -791,6 +807,10 @@ func (t *SimpleChaincode) RaiseClaim(stub *shim.ChaincodeStub, args []string) ([
 // ============================================================================================================================
 func makeTimestamp() int64 {
     return time.Now().UnixNano() / (int64(time.Millisecond)/int64(time.Nanosecond))
+}
+
+func findTimeStampDiff(ts1 int64,ts2 int64) int64{
+	return (ts1-ts2)/3600/24
 }
 
 func stringInSlice(a string, list []string) bool {
