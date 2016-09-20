@@ -103,8 +103,8 @@ type Group struct{
 	Status		 string 	`json:"status"`
 	PoolBalance	 float64	`json:"poolBalance"`
 	InsurerId	 string 	`json:"insurer"`
-	CreatedDate  int64 	`json:"createddate"`
-	EndDate 	 int64 	`json:"enddate"`
+	CreatedDate  int64 		`json:"createddate"`
+	EndDate 	 int64 		`json:"enddate"`
 	GroupPremium float64	`json:"groupPremium"`
 }
 
@@ -672,7 +672,7 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 
 		timestamp = makeTimestamp();
 
-		premium = group.GroupPremium * float64((findTimeStampDiff(group.EndDate,timestamp)/findTimeStampDiff(group.EndDate,group.CreatedDate)));
+		premium = group.GroupPremium * float64((findTimeStampDiff(group.EndDate,timestamp))/(findTimeStampDiff(group.EndDate,group.CreatedDate)));
 
 		var percentage []float64 
 		percentage = getPremiumPercentages(len(group.RiskIds))
