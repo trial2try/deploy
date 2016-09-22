@@ -806,7 +806,8 @@ func (t *SimpleChaincode) RaiseClaim(stub *shim.ChaincodeStub, args []string) ([
 // Make Timestamp - create a timestamp in ms
 // ============================================================================================================================
 func makeTimestamp() int64 {
-    return time.Now().UnixNano() / (int64(time.Millisecond)/int64(time.Nanosecond))
+   	t := time.Now().UnixNano() / (int64(time.Millisecond)/int64(time.Nanosecond))
+   	return t/1000
 }
 
 func findTimeStampDiff(ts1 int64,ts2 int64) int64{
