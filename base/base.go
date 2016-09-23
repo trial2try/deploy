@@ -541,9 +541,11 @@ Inputs: 	args[0]		args[1]	args[2]		args[3]
 // ============================================================================================================================
 //func (t *SimpleChaincode) CreateRisk(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 func (t *SimpleChaincode) CreateRisk(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+	
 	fmt.Println("running CreateRisk()")
 
 	if len(args) != 4 {
+
 		return nil, errors.New("Incorrect number of arguments. Expecting 4. ")
 	}
 
@@ -581,10 +583,6 @@ func (t *SimpleChaincode) CreateRisk(stub *shim.ChaincodeStub, args []string) ([
 	jsonAsBytes, _ = json.Marshal(riskIndex)
 	err = stub.PutState(RISK_INDEX, jsonAsBytes)						//store risk id of risk
 
-	jsonAsBytes, _ = json.Marshal(risk.Id)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
-	err = stub.PutState(RISK_ID, jsonAsBytes)
-
-
 	//Get Member
 	memberAsBytes, err := stub.GetState(risk.OwnerId)
 	if err != nil {
@@ -600,9 +598,12 @@ func (t *SimpleChaincode) CreateRisk(stub *shim.ChaincodeStub, args []string) ([
 		return nil, err
 	}
 
-	riskId := []byte(risk.Id)
+	//riskId := []byte(risk.Id)
 
-	return riskId, nil
+	jsonAsBytes, _ = json.Marshal(risk.Id)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
+	err = stub.PutState(RISK_ID, jsonAsBytes)
+
+	return jsonAsBytes, nil
 }
 
 // ============================================================================================================================
