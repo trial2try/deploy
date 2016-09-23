@@ -595,7 +595,9 @@ func (t *SimpleChaincode) CreateRisk(stub *shim.ChaincodeStub, args []string) ([
 		return nil, err
 	}
 
-	return nil, nil
+	riskId := []byte(risk.Id)
+
+	return riskId, nil
 }
 
 // ============================================================================================================================
