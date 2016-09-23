@@ -1,12 +1,9 @@
 /*
 Copyright IBM Corp 2016 All Rights Reserved.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
 		 http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,6 +59,10 @@ var memberCounter = 3
 var insurerCounter = 1
 var claimCounter = 2
 var bicycleCounter = 4
+
+
+/* DYNAMIC VARIABLE */
+var RISK_ID = "_riskId"
 
 /*	STRUCTURES PERSISTING IN BLOCKCHAIN	*/
 
@@ -579,6 +580,10 @@ func (t *SimpleChaincode) CreateRisk(stub *shim.ChaincodeStub, args []string) ([
 	fmt.Println("! risk index: ", riskIndex)
 	jsonAsBytes, _ = json.Marshal(riskIndex)
 	err = stub.PutState(RISK_INDEX, jsonAsBytes)						//store risk id of risk
+
+	jsonAsBytes, _ = json.Marshal(risk.Id)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
+	err = stub.PutState(RISK_ID, jsonAsBytes)
+
 
 	//Get Member
 	memberAsBytes, err := stub.GetState(risk.OwnerId)
