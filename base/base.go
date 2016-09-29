@@ -100,15 +100,15 @@ type Member struct{
 }
 
 type Group struct{
-	Name 		 string 	`json:"name"`
-	RiskIds		 []string 	`json:"riskids"`	 
-	RiskType	 string		`json:"riskType"`	
-	Status		 string 	`json:"status"`
-	PoolBalance	 float64	`json:"poolBalance"`
-	InsurerId	 string 	`json:"insurer"`
-	CreatedDate  int64 		`json:"createddate"`
-	EndDate 	 int64 		`json:"enddate"`
-	GroupPremium float64	`json:"groupPremium"`
+	Name 		 	string 		`json:"name"`
+	RiskIds		 	[]string 	`json:"riskids"`	 
+	RiskType	 	string		`json:"riskType"`	
+	Status		 	string 		`json:"status"`
+	PoolBalance	 	float64		`json:"poolBalance"`
+	InsurerId	 	string 		`json:"insurer"`
+	CreatedDate  	int64 		`json:"createddate"`
+	EndDate 	 	int64 		`json:"enddate"`
+	premiumPercentage float64	`json:"premiumPercentage"`
 }
 
 type Insurer struct{
@@ -314,7 +314,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	group1.InsurerId = "ins001"
 	group1.CreatedDate =  makeTimestamp()
 	group1.EndDate = 1506752393
-	group1.GroupPremium = 25
+	group1.premiumPercentage = 25
 
 	group2.Name = "bi002"
 	for j :=0; j < 5; j++ {
@@ -324,9 +324,9 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	group2.Status = "open"
 	group2.PoolBalance = 27.50
 	group2.InsurerId = "ins002"
-	group2.CreatedDate = makeTimestamp() - 60000000
-	group2.EndDate = 1506752393 + 60000000
-	group2.GroupPremium = 30
+	group2.CreatedDate = 1462068600
+	group2.EndDate = 1493603999
+	group2.premiumPercentage = 30
 
 	group3.Name = "bi003"
 	for j :=0; j < 8; j++ {
@@ -336,9 +336,9 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	group3.Status = "closed"
 	group3.PoolBalance = 48.00
 	group3.InsurerId = "ins003"
-	group3.CreatedDate = makeTimestamp() - 120000000
-	group3.EndDate = 1506752393 + 120000000
-	group3.GroupPremium = 24;
+	group3.CreatedDate = 1461231022
+	group3.EndDate = 1492766999
+	group3.premiumPercentage = 24;
 
 	group4.Name = "bi004"
 	for j :=0; j < 8; j++ {
@@ -348,9 +348,9 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	group4.Status = "closed"
 	group4.PoolBalance = 56.00
 	group4.InsurerId = "ins002"
-	group4.CreatedDate = makeTimestamp() - 90000000
-	group4.EndDate = 1506752393 + 90000000   
-	group4.GroupPremium = 28;
+	group4.CreatedDate = 1455340520
+	group4.EndDate = 1486961940   
+	group4.premiumPercentage = 28;
 
 	/*Persisting Groups*/
 	jsonAsBytes, _ = json.Marshal(group1)
@@ -683,7 +683,7 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 		group := Group{}
 		json.Unmarshal(groupAsBytes, &group)
 
-	if member.Tokens-group.GroupPremium > 0.0 {
+	if member.Tokens-group.premiumPercentage > 0.0 {
 
 		if group.RiskType != risk.Type{
 			return nil, errors.New("Can't add "+risk.Type+" risk to group of "+group.RiskType)	
@@ -709,7 +709,7 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 
 		timestamp = makeTimestamp();
 
-		premium = risk.Value * group.GroupPremium * float64((findTimeStampDiff(group.EndDate,timestamp))/(findTimeStampDiff(group.EndDate,group.CreatedDate))) ;
+		premium = risk.Value * group.premiumPercentage * float64((findTimeStampDiff(group.EndDate,timestamp))/(findTimeStampDiff(group.EndDate,group.CreatedDate))) ;
 
 		var percentage []float64 
 		percentage = getPremiumPercentages(len(group.RiskIds))
