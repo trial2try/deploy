@@ -198,6 +198,9 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 
 	var insurerInit []string
 	insurerInit = append(insurerInit, "ins001")
+	insurerInit = append(insurerInit, "ins002")
+	insurerInit = append(insurerInit, "ins003")
+	insurerInit = append(insurerInit, "ins004")	
 
 	jsonAsBytes, _ = json.Marshal(insurerInit)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
 	err = stub.PutState(INSURER_INDEX, jsonAsBytes)
@@ -218,7 +221,9 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	risk3 := Risk{}
 	claim1 := Claim{}
 	claim2 := Claim{}
-	insurer := Insurer{}
+	insurer1 := Insurer{}
+	insurer2 := Insurer{}
+	insurer3 := Insurer{}
 
 	claim1.Id = "cid001"
 	claim1.RiskId = "rid002"
@@ -228,21 +233,21 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
     
 	claim2.Id = "cid002"
 	claim2.RiskId = "rid003"
-	claim2.Claimed = 200.0
-	claim2.Settled = 200.0
+	claim2.Claimed = 60.0
+	claim2.Settled = 60.0
 	claim2.Timestamp = makeTimestamp()
 	claim2.Type = "theft"
 
 	risk1.Id = "rid001"
 	risk1.Value = 100
-	risk1.Premium = 12
+	risk1.Premium = 25
 	risk1.Model = "XYZ"
 	risk1.Type = BICYCLE
 	risk1.Status = "covered"
 	risk1.OwnerId = "uid002"
 
 	risk2.Id = "rid002"
-	risk2.Value = 250
+	risk2.Value = 80
 	risk2.Premium = 25
 	risk2.Model = "PQR"
 	risk2.Type = BICYCLE
@@ -251,12 +256,12 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	risk2.ClaimIds = append(risk2.ClaimIds, claim1.Id)
 
 	risk3.Id = "rid003"
-	risk3.Value = 200
-	risk3.Premium = 20
+	risk3.Value = 110
+	risk3.Premium = 25
 	risk3.Model = "ABC"
 	risk3.Type = BICYCLE
 	risk3.Status = "covered"
-	risk3.OwnerId = "uid001"
+	risk3.OwnerId = "uid002"
 	risk3.ClaimIds = append(risk3.ClaimIds, claim2.Id)
 
 	member1.UserId = "uid001"
@@ -286,9 +291,17 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	member3.RiskIds = append(member3.RiskIds, risk2.Id)
 	member3.Tokens = 1450
 
-	insurer.Id = "ins001"
-	insurer.Name = "JKL Insurance"
-	insurer.Tokens = 13840
+	insurer1.Id = "ins001"
+	insurer1.Name = "JKL Insurance"
+	insurer1.Tokens = 13840
+
+	insurer2.Id = "ins002"
+	insurer2.Name = "ABC Insurance"
+	insurer2.Tokens = 14000
+
+	insurer3.Id = "ins003"
+	insurer3.Name = "XYZ Insurance"
+	insurer3.Tokens = 11220
 	
 
 	group1.Name = "bi001"
@@ -297,7 +310,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	group1.RiskIds = append(group1.RiskIds, risk3.Id)
 	group1.RiskType = BICYCLE
 	group1.Status = "open"
-	group1.PoolBalance = 39.5
+	group1.PoolBalance = 18.75
 	group1.InsurerId = "ins001"
 	group1.CreatedDate =  makeTimestamp()
 	group1.EndDate = 1506752393
@@ -309,10 +322,10 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
 	group2.RiskType = BICYCLE
 	group2.Status = "open"
-	group2.PoolBalance = 45.6
-	group2.InsurerId = "ins005"
+	group2.PoolBalance = 27.50
+	group2.InsurerId = "ins002"
 	group2.CreatedDate = makeTimestamp() - 60000000
-	group2.EndDate = 1506752393 - 60000000
+	group2.EndDate = 1506752393 + 60000000
 	group2.GroupPremium = 30
 
 	group3.Name = "bi003"
@@ -321,10 +334,10 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
 	group3.RiskType = BICYCLE
 	group3.Status = "closed"
-	group3.PoolBalance = 67.2
+	group3.PoolBalance = 48.00
 	group3.InsurerId = "ins003"
 	group3.CreatedDate = makeTimestamp() - 120000000
-	group3.EndDate = 1506752393 - 120000000
+	group3.EndDate = 1506752393 + 120000000
 	group3.GroupPremium = 24;
 
 	group4.Name = "bi004"
@@ -333,10 +346,10 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
 	group4.RiskType = BICYCLE
 	group4.Status = "closed"
-	group4.PoolBalance = 23.7
+	group4.PoolBalance = 56.00
 	group4.InsurerId = "ins002"
 	group4.CreatedDate = makeTimestamp() - 90000000
-	group4.EndDate = 1506752393 - 90000000   
+	group4.EndDate = 1506752393 + 90000000   
 	group4.GroupPremium = 28;
 
 	/*Persisting Groups*/
@@ -408,8 +421,22 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
 
 	/*Persisting Insurer*/
-	jsonAsBytes, _ = json.Marshal(insurer)
-	err = stub.PutState(insurer.Id, jsonAsBytes)				
+	jsonAsBytes, _ = json.Marshal(insurer1)
+	err = stub.PutState(insurer1.Id, jsonAsBytes)				
+	if err != nil {
+		return nil, err
+	}
+
+	/*Persisting Insurer*/
+	jsonAsBytes, _ = json.Marshal(insurer2)
+	err = stub.PutState(insurer2.Id, jsonAsBytes)				
+	if err != nil {
+		return nil, err
+	}
+
+	/*Persisting Insurer*/
+	jsonAsBytes, _ = json.Marshal(insurer3)
+	err = stub.PutState(insurer3.Id, jsonAsBytes)				
 	if err != nil {
 		return nil, err
 	}
