@@ -313,7 +313,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	group1.PoolBalance = 18.75
 	group1.InsurerId = "ins001"
 	group1.CreatedDate =  makeTimestamp()
-	group1.EndDate = 1506752393
+	group1.EndDate = makeTimestamp() + 31449600
 	group1.GroupPremium = 25
 
 	group2.Name = "bi002"
@@ -325,7 +325,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	group2.PoolBalance = 27.50
 	group2.InsurerId = "ins002"
 	group2.CreatedDate = 1462068600
-	group2.EndDate = 1493603999
+	group2.EndDate = 1462068600 + 31449600
 	group2.GroupPremium = 30
 
 	group3.Name = "bi003"
@@ -337,7 +337,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	group3.PoolBalance = 48.00
 	group3.InsurerId = "ins003"
 	group3.CreatedDate = 1461231022
-	group3.EndDate = 1492766999
+	group3.EndDate = 1461231022 + 31449600
 	group3.GroupPremium = 24;
 
 	group4.Name = "bi004"
@@ -349,7 +349,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	group4.PoolBalance = 56.00
 	group4.InsurerId = "ins002"
 	group4.CreatedDate = 1455340520
-	group4.EndDate = 1486961940   
+	group4.EndDate = 1455340520 + 31449600
 	group4.GroupPremium = 28;
 
 	/*Persisting Groups*/
