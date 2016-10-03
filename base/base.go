@@ -120,12 +120,15 @@ type Insurer struct{
 
 /*	RESPONSE STRUCTURES	*/
 type GroupRisksResponse struct{
-	Name 		string 		`json:"name"`
-	RiskType	string		`json:"riskType"`	
-	Status		string 		`json:"status"`
-	PoolBalance	int 		`json:"poolBalance"`
-	Risks 		[]Risk 		`json:"risks"`
-
+	Id 			string 		`json:"id"`
+	Value 		float64 	`json:"value"`										
+	Premium 	float64		`json:"premium"`
+	Model 		string 		`json:"model"`
+	Type 		string 		`json:"type"`
+	Status 		string 		`json:"status"`
+	OwnerName 	string 		`json:"ownerName"`
+	ClaimIds	[]string 	`json:"claimsids"`
+	LoggedDate	int64		`json:"loggedDate"`
 }
 
 type UserRisksReponse struct{
@@ -855,15 +858,64 @@ func (t *SimpleChaincode) RaiseClaim(stub *shim.ChaincodeStub, args []string) ([
 // ============================================================================================================================
 /*	getGroupRisks - Query function to read all risk details of a Group
  	Inputs: 	args[0]
- 				group id
+ 				group Name
  	Output:		GroupRisksResponse as bytes
 */
 // ============================================================================================================================
 
 //func (t *SimpleChaincode) getGroupRisks(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 func (t *SimpleChaincode) getGroupRisks(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+	var riskAsbytes []byte
+	var err error
+	fmt.Println("running getGroupRisks()")
+	if len(args) != 1 {
+		return nil, errors.New("Incorrect number of arguments. Expecting name of the group to query ")
+	}
+	groupRisk:= GroupRisksResponse{}
+	risk := Risk{}
+	//Get Group
+	groupAsBytes, err := stub.GetState(args[0])
+	if err != nil {
+		return nil, errors.New("Failed to get group")
+	}
+	group := Group{}
+	json.Unmarshal(groupAsBytes, &group)
 
+	var groupRisksResponse []GroupRisksResponse
 
+	for _,element := range group.RiskIds {
+		groupRisk = GroupRisksResponse{}
+		riskAsbytes, err = stub.GetState(element) 
+		if err != nil {
+			jsonResp := "{\"Error\":\"Failed to get state for " + element + "\"}"
+			return nil, errors.New(jsonResp)
+		}
+		json.Unmarshal(riskAsbytes, &risk)	
+		//Add risk to Response structure
+		groupRisk.Id = risk.Id
+		groupRisk.Value = risk.Value
+		groupRisk.Premium = risk.Premium
+		groupRisk.Model = risk.Model	
+		groupRisk.Type = risk.Type
+		groupRisk.Status = risk.Status
+		groupRisk.ClaimIds = risk.ClaimIds
+		groupRisk.LoggedDate = risk.LoggedDate
+
+		//Getting Owner Name from owner id
+		memberAsBytes, err := stub.GetState(risk.OwnerId)
+		if err != nil {
+			return nil, errors.New("Failed to get member")
+		}
+		member := Member{}
+		json.Unmarshal(memberAsBytes, &member)
+		//Add Name
+		groupRisk.OwnerName = member.Name
+		//Append to Respone array
+		groupRisksResponse = append(groupRisksResponse,groupRisk)
+	}
+	groupRisksResponseAsBytes, _ := json.Marshal(groupRisksResponse)
+
+	return groupRisksResponseAsBytes, nil
 
 }
 
@@ -877,7 +929,7 @@ func (t *SimpleChaincode) getGroupRisks(stub *shim.ChaincodeStub, args []string)
 //func (t *SimpleChaincode) getUserRisks(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
-
+return nil,nil
 }
 
 /*	UTILITY FUNCTIONS	*/
