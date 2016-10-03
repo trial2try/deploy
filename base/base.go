@@ -86,6 +86,7 @@ type Risk struct{
 	Status 		string 		`json:"status"`
 	OwnerId 	string 		`json:"ownerid"`
 	ClaimIds	[]string 	`json:"claimsids"`
+	LoggedDate	int64		`json:"loggedDate"`
 }
 
 type Member struct{
@@ -115,17 +116,27 @@ type Insurer struct{
 	Id			string 		`json:"id"`
 	Name 		string 		`json:"name"`
 	Tokens 		float64		`json:tokens`
-
 }
 
 /*	RESPONSE STRUCTURES	*/
-type GroupInfo struct{
+type GroupRisksResponse struct{
 	Name 		string 		`json:"name"`
-	Count 		int			`json:"count"`
 	RiskType	string		`json:"riskType"`	
 	Status		string 		`json:"status"`
 	PoolBalance	int 		`json:"poolBalance"`
+	Risks 		[]Risk 		`json:"risks"`
 
+}
+
+type UserRisksReponse struct{
+	RiskId 				string
+	Type 				string	
+	Model 				string
+	GroupId 			string
+	LoggedDate 			int64
+	PolictExpiryDate	int64
+	InsurerName 		string
+	PremiumPaid 		float64
 }
 
 /*	PREDEFINED FUNCTIONS	*/
@@ -245,6 +256,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	risk1.Type = BICYCLE
 	risk1.Status = "covered"
 	risk1.OwnerId = "uid002"
+	risk1.LoggedDate = makeTimestamp()
 
 	risk2.Id = "rid002"
 	risk2.Value = 80
@@ -254,6 +266,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	risk2.Status = "covered"
 	risk2.OwnerId = "uid003"
 	risk2.ClaimIds = append(risk2.ClaimIds, claim1.Id)
+	risk2.LoggedDate = makeTimestamp()
 
 	risk3.Id = "rid003"
 	risk3.Value = 110
@@ -263,6 +276,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	risk3.Status = "covered"
 	risk3.OwnerId = "uid002"
 	risk3.ClaimIds = append(risk3.ClaimIds, claim2.Id)
+	risk3.LoggedDate = makeTimestamp()
 
 	member1.UserId = "uid001"
 	member1.Name = "John Snow"
@@ -485,11 +499,11 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
-	} else if function == "getGroupInfo"{
-
-	} else if function == "getGroupMembers"{
-
 	} else if function == "getGroupRisks"{
+		return t.getGroupRisks(stub, args)
+	} else if function == "getUserRisks"{
+		return t.getUserRisks(stub, args)
+	} else if function == ""{
 
 	} else if function == ""{
 
@@ -716,6 +730,7 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 
 		risk.Premium = 	premium											// Premium calculated at the time of risk added to group
 		risk.Status = "covered" 										// risk is insured 
+		risk.LoggedDate = makeTimestamp()
 		//append risk to group
 		group.RiskIds = append(group.RiskIds, risk.Id)
 		fmt.Println("! risk "+risk.Id+"added to group: ", group.Name)
@@ -835,6 +850,34 @@ func (t *SimpleChaincode) RaiseClaim(stub *shim.ChaincodeStub, args []string) ([
 	}
 
 	return nil, nil
+}
+
+// ============================================================================================================================
+/*	getGroupRisks - Query function to read all risk details of a Group
+ 	Inputs: 	args[0]
+ 				group id
+ 	Output:		GroupRisksResponse as bytes
+*/
+// ============================================================================================================================
+
+//func (t *SimpleChaincode) getGroupRisks(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) getGroupRisks(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+
+
+
+}
+
+// ============================================================================================================================
+/* 	getUserRisks - Query function to read add risks details of a User
+	Inputs: 	args[0]
+ 				userid
+ 	Output:		UserRisksReponse  as bytes
+*/
+// ============================================================================================================================
+//func (t *SimpleChaincode) getUserRisks(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+
+
 }
 
 /*	UTILITY FUNCTIONS	*/
