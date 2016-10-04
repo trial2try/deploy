@@ -147,8 +147,8 @@ type UserRisksResponse struct{
 // ============================================================================================================================
 // Init - Initializes all key value pairs to inital values
 // ============================================================================================================================
-//func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 
 	if len(args) != 1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 1")
@@ -470,8 +470,8 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 // ============================================================================================================================
 // Invoke - The entry point to invoke a chaincode function
 // ============================================================================================================================
-//func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {		
-func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {		
+//func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	fmt.Println("invoke is running " + function)
 
 	// Handle different functions
@@ -495,8 +495,8 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 // ============================================================================================================================
 // Query - The entry point for queries to a chaincode
 // ============================================================================================================================
-//func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args []string) ([]byte, error) {
 	fmt.Println("query is running " + function)
 
 	// Handle different functions
@@ -518,8 +518,8 @@ func (t *SimpleChaincode) Query(stub *shim.ChaincodeStub, function string, args 
 // ============================================================================================================================
 // write - Invoke function to write key/value pair
 // ============================================================================================================================
-//func (t *SimpleChaincode) write(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-func (t *SimpleChaincode) write(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+func (t *SimpleChaincode) write(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) write(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	var key, value string
 	var err error
 	fmt.Println("running write()")
@@ -539,8 +539,8 @@ func (t *SimpleChaincode) write(stub *shim.ChaincodeStub, args []string) ([]byte
 // ============================================================================================================================
 // read - Query function to read key/value pair
 // ============================================================================================================================
-//func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-func (t *SimpleChaincode) read(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) read(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	var key, jsonResp string
 	var err error
 	fmt.Println("Read running for ",args[0])
@@ -560,8 +560,8 @@ func (t *SimpleChaincode) read(stub *shim.ChaincodeStub, args []string) ([]byte,
 // ============================================================================================================================
 // Delete - Invoke function to remove a key/value pair from state
 // ============================================================================================================================
-//func (t *SimpleChaincode) Delete(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {												
-func (t *SimpleChaincode) Delete(stub *shim.ChaincodeStub, args []string) ([]byte, error) {	
+func (t *SimpleChaincode) Delete(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {												
+//func (t *SimpleChaincode) Delete(stub *shim.ChaincodeStub, args []string) ([]byte, error) {	
 	if len(args) != 1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 1")
 	}
@@ -585,8 +585,8 @@ Inputs: 	args[0]		args[1]	args[2]		args[3]
 			"100" 		"XYZ" 	"bicycle" 	
 */
 // ============================================================================================================================
-//func (t *SimpleChaincode) CreateRisk(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-func (t *SimpleChaincode) CreateRisk(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+func (t *SimpleChaincode) CreateRisk(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) CreateRisk(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	
 	fmt.Println("running CreateRisk()")
 
@@ -660,8 +660,8 @@ Inputs: 	args[0]		args[1]
 			"rid002"	"bi002"			
 */
 // ============================================================================================================================
-//func (t *SimpleChaincode) AddRisk(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+func (t *SimpleChaincode) AddRisk(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	fmt.Println("running AddRisk()")
 
 	if len(args) != 2 {
@@ -787,8 +787,8 @@ Inputs: 	args[0]		args[1]		args[2]
 			"ri004"		"15.5" 		"damage" 	
 */
 // ============================================================================================================================
-//func (t *SimpleChaincode) RaiseClaim(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-func (t *SimpleChaincode) RaiseClaim(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+func (t *SimpleChaincode) RaiseClaim(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) RaiseClaim(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	fmt.Println("running RaiseClaim()")
 
 	if len(args) != 3 {
@@ -863,8 +863,8 @@ func (t *SimpleChaincode) RaiseClaim(stub *shim.ChaincodeStub, args []string) ([
 */
 // ============================================================================================================================
 
-//func (t *SimpleChaincode) getGroupRisks(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-func (t *SimpleChaincode) getGroupRisks(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+func (t *SimpleChaincode) getGroupRisks(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) getGroupRisks(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 	var riskAsbytes []byte
 	var err error
 	fmt.Println("running getGroupRisks()")
@@ -926,8 +926,8 @@ func (t *SimpleChaincode) getGroupRisks(stub *shim.ChaincodeStub, args []string)
  	Output:		UserRisksReponse  as bytes
 */
 // ============================================================================================================================
-//func (t *SimpleChaincode) getUserRisks(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+func (t *SimpleChaincode) getUserRisks(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
 
 	fmt.Println("running getUserRisks()")
 
@@ -944,11 +944,34 @@ func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) 
 	json.Unmarshal(memberAsBytes, &member)
 
 	var userRisks []UserRisksResponse
-
 	var riskArray = member.RiskIds
 
-	//get Group
- 	userRisksResponse := UserRisksResponse{}
+	//retrive group index
+	bicyclegroupIndexAsBytes, err := stub.GetState(BICYCLE_GROUP_INDEX)
+	if err != nil {
+			return nil, errors.New("Failed to get bicycle group index")
+	}
+	var bicyclegroupIndex []string
+	json.Unmarshal(bicyclegroupIndexAsBytes, &bicyclegroupIndex)
+
+
+	smartphonegroupIndexAsBytes, err := stub.GetState(SMARTPHONE_GROUP_INDEX)
+	if err != nil {
+			return nil, errors.New("Failed to get smartphone group index")
+	}
+	var smartphonegroupIndex []string
+	json.Unmarshal(smartphonegroupIndexAsBytes, &smartphonegroupIndex)
+
+
+	idcardgroupIndexAsBytes, err := stub.GetState(ID_CARD_GROUPINDEX)
+	if err != nil {
+			return nil, errors.New("Failed to get idcard group index")
+	}
+	var idcardgroupIndex []string
+	json.Unmarshal(idcardgroupIndexAsBytes, &idcardgroupIndex)
+
+	userRisksResponse := UserRisksResponse{}
+	
 	for _, riskId := range riskArray {
         
         userRisksResponse = UserRisksResponse{}
@@ -967,16 +990,7 @@ func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) 
 		userRisksResponse.LoggedDate = risk.LoggedDate
 		userRisksResponse.PremiumPaid = risk.Premium
 
-		
-		
-			//retrive group index
-			bicyclegroupIndexAsBytes, err := stub.GetState(BICYCLE_GROUP_INDEX)
-			if err != nil {
-				return nil, errors.New("Failed to get bicycle group index")
-			}
-			var bicyclegroupIndex []string
-			json.Unmarshal(bicyclegroupIndexAsBytes, &bicyclegroupIndex)
-
+		if risk.Type == "bicycle"{
 			for _, groupId := range bicyclegroupIndex{
 				groupAsBytes, err := stub.GetState(groupId)
 				if err != nil {
@@ -1005,10 +1019,73 @@ func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) 
 					userRisksResponse.InsurerName = insurer.Name
 				}
 			}
-		
-		
 			//pushing obj to struct array
 			userRisks = append(userRisks,userRisksResponse)
+		}
+		if risk.Type == "smartphone"{
+			for _, groupId := range smartphonegroupIndex{
+				groupAsBytes, err := stub.GetState(groupId)
+				if err != nil {
+					return nil, errors.New("Failed to get group")
+				}
+				group := Group{}
+				json.Unmarshal(groupAsBytes, &group)
+
+				var groupRisks []string
+				groupRisks = group.RiskIds
+
+				if stringInSlice(risk.Id, groupRisks){
+					userRisksResponse.GroupId = group.Name
+					userRisksResponse.PolicyExpiryDate = group.EndDate
+					//get Insurer name
+					var InsId = group.InsurerId
+
+					//get insurer details
+					insurerAsBytes, err := stub.GetState(InsId)
+					if err != nil {
+						return nil, errors.New("Failed to get insurer")
+					}
+					insurer := Insurer{}
+					json.Unmarshal(insurerAsBytes, &insurer)
+
+					userRisksResponse.InsurerName = insurer.Name
+				}
+			}
+			//pushing obj to struct array
+			userRisks = append(userRisks,userRisksResponse)
+		}
+		if risk.Type == "idcard"{
+			for _, groupId := range idcardgroupIndex{
+				groupAsBytes, err := stub.GetState(groupId)
+				if err != nil {
+					return nil, errors.New("Failed to get group")
+				}
+				group := Group{}
+				json.Unmarshal(groupAsBytes, &group)
+
+				var groupRisks []string
+				groupRisks = group.RiskIds
+
+				if stringInSlice(risk.Id, groupRisks){
+					userRisksResponse.GroupId = group.Name
+					userRisksResponse.PolicyExpiryDate = group.EndDate
+					//get Insurer name
+					var InsId = group.InsurerId
+
+					//get insurer details
+					insurerAsBytes, err := stub.GetState(InsId)
+					if err != nil {
+						return nil, errors.New("Failed to get insurer")
+					}
+					insurer := Insurer{}
+					json.Unmarshal(insurerAsBytes, &insurer)
+
+					userRisksResponse.InsurerName = insurer.Name
+				}
+			}
+			//pushing obj to struct array
+			userRisks = append(userRisks,userRisksResponse)
+		}	
 
        }
 			//appending to the userRiskResponse
