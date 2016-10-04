@@ -289,6 +289,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	member1.Dob = "20 Nov 93"
 	member1.RiskIds = append(member1.RiskIds, risk3.Id)
 	member1.Tokens = 1000
+	
 
 	member2.UserId = "uid002"
 	member2.Name = "Thomas Buck"
@@ -298,6 +299,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	member2.Dob = "20 Sept 94"
 	member2.RiskIds = append(member2.RiskIds, risk1.Id)
 	member2.Tokens = 1200
+	
 
 	member3.UserId = "uid003"
 	member3.Name = "George Tent"
@@ -944,34 +946,11 @@ func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) 
 	json.Unmarshal(memberAsBytes, &member)
 
 	var userRisks []UserRisksResponse
+
 	var riskArray = member.RiskIds
 
-	//retrive group index
-	bicyclegroupIndexAsBytes, err := stub.GetState(BICYCLE_GROUP_INDEX)
-	if err != nil {
-			return nil, errors.New("Failed to get bicycle group index")
-	}
-	var bicyclegroupIndex []string
-	json.Unmarshal(bicyclegroupIndexAsBytes, &bicyclegroupIndex)
-
-
-	smartphonegroupIndexAsBytes, err := stub.GetState(SMARTPHONE_GROUP_INDEX)
-	if err != nil {
-			return nil, errors.New("Failed to get smartphone group index")
-	}
-	var smartphonegroupIndex []string
-	json.Unmarshal(smartphonegroupIndexAsBytes, &smartphonegroupIndex)
-
-
-	idcardgroupIndexAsBytes, err := stub.GetState(ID_CARD_GROUPINDEX)
-	if err != nil {
-			return nil, errors.New("Failed to get idcard group index")
-	}
-	var idcardgroupIndex []string
-	json.Unmarshal(idcardgroupIndexAsBytes, &idcardgroupIndex)
-
-	userRisksResponse := UserRisksResponse{}
-	
+	//get Group
+ 	userRisksResponse := UserRisksResponse{}
 	for _, riskId := range riskArray {
         
         userRisksResponse = UserRisksResponse{}
@@ -990,7 +969,16 @@ func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) 
 		userRisksResponse.LoggedDate = risk.LoggedDate
 		userRisksResponse.PremiumPaid = risk.Premium
 
+		
 		if risk.Type == "bicycle"{
+			//retrive group index
+			bicyclegroupIndexAsBytes, err := stub.GetState(BICYCLE_GROUP_INDEX)
+			if err != nil {
+				return nil, errors.New("Failed to get bicycle group index")
+			}
+			var bicyclegroupIndex []string
+			json.Unmarshal(bicyclegroupIndexAsBytes, &bicyclegroupIndex)
+
 			for _, groupId := range bicyclegroupIndex{
 				groupAsBytes, err := stub.GetState(groupId)
 				if err != nil {
@@ -1019,10 +1007,18 @@ func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) 
 					userRisksResponse.InsurerName = insurer.Name
 				}
 			}
-			//pushing obj to struct array
+
 			userRisks = append(userRisks,userRisksResponse)
-		}
-		if risk.Type == "smartphone"{
+
+		} else if risk.Type == "smartphone"{
+			//retrieve group index
+			smartphonegroupIndexAsBytes, err := stub.GetState(SMARTPHONE_GROUP_INDEX)
+			if err != nil {
+				return nil, errors.New("Failed to get smartphone group index")
+			}
+			var smartphonegroupIndex []string
+			json.Unmarshal(smartphonegroupIndexAsBytes, &smartphonegroupIndex)
+
 			for _, groupId := range smartphonegroupIndex{
 				groupAsBytes, err := stub.GetState(groupId)
 				if err != nil {
@@ -1051,11 +1047,20 @@ func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) 
 					userRisksResponse.InsurerName = insurer.Name
 				}
 			}
-			//pushing obj to struct array
+
 			userRisks = append(userRisks,userRisksResponse)
-		}
-		if risk.Type == "idcard"{
-			for _, groupId := range idcardgroupIndex{
+
+
+		} else if risk.Type == "idcard" {
+			//retrieve group index
+			idCardgroupIndexAsBytes, err := stub.GetState(ID_CARD_GROUPINDEX)
+			if err != nil {
+				return nil, errors.New("Failed to get idCard group index")
+			}
+			var idCardgroupIndex []string
+			json.Unmarshal(idCardgroupIndexAsBytes, &idCardgroupIndex)	
+
+			for _, groupId := range idCardgroupIndex{
 				groupAsBytes, err := stub.GetState(groupId)
 				if err != nil {
 					return nil, errors.New("Failed to get group")
@@ -1083,11 +1088,14 @@ func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) 
 					userRisksResponse.InsurerName = insurer.Name
 				}
 			}
-			//pushing obj to struct array
 			userRisks = append(userRisks,userRisksResponse)
-		}	
+
+		}
+			//pushing obj to struct array
+			
 
        }
+
 			//appending to the userRiskResponse
 			userRisksAsBytes, _ := json.Marshal(userRisks)
 
