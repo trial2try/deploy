@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"encoding/json"
 	"time"
-	"strings"
+	//"strings"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 )
@@ -120,12 +120,15 @@ type Insurer struct{
 
 /*	RESPONSE STRUCTURES	*/
 type GroupRisksResponse struct{
-	Name 		string 		`json:"name"`
-	RiskType	string		`json:"riskType"`	
-	Status		string 		`json:"status"`
-	PoolBalance	int 		`json:"poolBalance"`
-	Risks 		[]Risk 		`json:"risks"`
-
+	Id 			string 		`json:"id"`
+	Value 		float64 	`json:"value"`										
+	Premium 	float64		`json:"premium"`
+	Model 		string 		`json:"model"`
+	Type 		string 		`json:"type"`
+	Status 		string 		`json:"status"`
+	OwnerName 	string 		`json:"ownerName"`
+	ClaimIds	[]string 	`json:"claimsids"`
+	LoggedDate	int64		`json:"loggedDate"`
 }
 
 type UserRisksResponse struct{
@@ -274,7 +277,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	risk3.Model = "ABC"
 	risk3.Type = BICYCLE
 	risk3.Status = "covered"
-	risk3.OwnerId = "uid002"
+	risk3.OwnerId = "uid001"
 	risk3.ClaimIds = append(risk3.ClaimIds, claim2.Id)
 	risk3.LoggedDate = makeTimestamp()
 
@@ -855,23 +858,72 @@ func (t *SimpleChaincode) RaiseClaim(stub *shim.ChaincodeStub, args []string) ([
 // ============================================================================================================================
 /*	getGroupRisks - Query function to read all risk details of a Group
  	Inputs: 	args[0]
- 				group id
+ 				group Name
  	Output:		GroupRisksResponse as bytes
 */
 // ============================================================================================================================
 
 //func (t *SimpleChaincode) getGroupRisks(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 func (t *SimpleChaincode) getGroupRisks(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+	var riskAsbytes []byte
+	var err error
+	fmt.Println("running getGroupRisks()")
+	if len(args) != 1 {
+		return nil, errors.New("Incorrect number of arguments. Expecting name of the group to query ")
+	}
+	groupRisk:= GroupRisksResponse{}
+	risk := Risk{}
+	//Get Group
+	groupAsBytes, err := stub.GetState(args[0])
+	if err != nil {
+		return nil, errors.New("Failed to get group")
+	}
+	group := Group{}
+	json.Unmarshal(groupAsBytes, &group)
 
-	
-return nil, nil
+	var groupRisksResponse []GroupRisksResponse
+
+	for _,element := range group.RiskIds {
+		groupRisk = GroupRisksResponse{}
+		riskAsbytes, err = stub.GetState(element) 
+		if err != nil {
+			jsonResp := "{\"Error\":\"Failed to get state for " + element + "\"}"
+			return nil, errors.New(jsonResp)
+		}
+		json.Unmarshal(riskAsbytes, &risk)	
+		//Add risk to Response structure
+		groupRisk.Id = risk.Id
+		groupRisk.Value = risk.Value
+		groupRisk.Premium = risk.Premium
+		groupRisk.Model = risk.Model	
+		groupRisk.Type = risk.Type
+		groupRisk.Status = risk.Status
+		groupRisk.ClaimIds = risk.ClaimIds
+		groupRisk.LoggedDate = risk.LoggedDate
+
+		//Getting Owner Name from owner id
+		memberAsBytes, err := stub.GetState(risk.OwnerId)
+		if err != nil {
+			return nil, errors.New("Failed to get member")
+		}
+		member := Member{}
+		json.Unmarshal(memberAsBytes, &member)
+		//Add Name
+		groupRisk.OwnerName = member.Name
+		//Append to Respone array
+		groupRisksResponse = append(groupRisksResponse,groupRisk)
+	}
+	groupRisksResponseAsBytes, _ := json.Marshal(groupRisksResponse)
+
+	return groupRisksResponseAsBytes, nil
+
 }
 
 // ============================================================================================================================
 /* 	getUserRisks - Query function to read add risks details of a User
 	Inputs: 	args[0]
  				userid
- 	Output:		UserRisksResponse  as bytes
+ 	Output:		UserRisksReponse  as bytes
 */
 // ============================================================================================================================
 //func (t *SimpleChaincode) getUserRisks(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
@@ -916,7 +968,7 @@ func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) 
 		userRisksResponse.PremiumPaid = risk.Premium
 
 		
-		if strings.HasPrefix(risk.Id, "bi"){
+		if risk.Type == "BICYCLE" {
 			//retrive group index
 			bicyclegroupIndexAsBytes, err := stub.GetState(BICYCLE_GROUP_INDEX)
 			if err != nil {
@@ -956,7 +1008,7 @@ func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) 
 
 
 
-		} else if strings.HasPrefix(risk.Id, "sp"){
+		} else if risk.Type == "SMARTPHONE" {
 			//retrieve group index
 			smartphonegroupIndexAsBytes, err := stub.GetState(SMARTPHONE_GROUP_INDEX)
 			if err != nil {
@@ -997,7 +1049,7 @@ func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) 
 
 
 
-		} else if strings.HasPrefix(risk.Id, "ic"){
+		} else if risk.Type == "IDCARD" {
 			//retrieve group index
 			idCardgroupIndexAsBytes, err := stub.GetState(ID_CARD_GROUPINDEX)
 			if err != nil {
@@ -1046,6 +1098,7 @@ func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) 
 		return userRisksAsBytes,nil
 
 }
+
 
 /*	UTILITY FUNCTIONS	*/
 
