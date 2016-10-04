@@ -745,6 +745,10 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 		member.Tokens = member.Tokens-premium
 		insurer.Tokens = insurer.Tokens + premium * percentage[1] 						// premium * insurer share %
 		
+		//If its a new group append groupIds
+		if(!(stringInSlice(args[1],member.GroupIds))){
+			member.GroupIds = append(member.GroupIds,args[1])
+		}
 
 		//Update Member
 		jsonAsBytes, _ := json.Marshal(member)
