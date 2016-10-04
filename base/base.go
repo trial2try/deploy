@@ -968,7 +968,7 @@ func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) 
 		userRisksResponse.PremiumPaid = risk.Premium
 
 		
-		if risk.Type == "BICYCLE" {
+		
 			//retrive group index
 			bicyclegroupIndexAsBytes, err := stub.GetState(BICYCLE_GROUP_INDEX)
 			if err != nil {
@@ -1005,89 +1005,8 @@ func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) 
 					userRisksResponse.InsurerName = insurer.Name
 				}
 			}
-
-
-
-		} else if risk.Type == "SMARTPHONE" {
-			//retrieve group index
-			smartphonegroupIndexAsBytes, err := stub.GetState(SMARTPHONE_GROUP_INDEX)
-			if err != nil {
-				return nil, errors.New("Failed to get smartphone group index")
-			}
-			var smartphonegroupIndex []string
-			json.Unmarshal(smartphonegroupIndexAsBytes, &smartphonegroupIndex)
-
-			for _, groupId := range smartphonegroupIndex{
-				groupAsBytes, err := stub.GetState(groupId)
-				if err != nil {
-					return nil, errors.New("Failed to get group")
-				}
-				group := Group{}
-				json.Unmarshal(groupAsBytes, &group)
-
-				var groupRisks []string
-				groupRisks = group.RiskIds
-
-				if stringInSlice(risk.Id, groupRisks){
-					userRisksResponse.GroupId = group.Name
-					userRisksResponse.PolicyExpiryDate = group.EndDate
-					//get Insurer name
-					var InsId = group.InsurerId
-
-					//get insurer details
-					insurerAsBytes, err := stub.GetState(InsId)
-					if err != nil {
-						return nil, errors.New("Failed to get insurer")
-					}
-					insurer := Insurer{}
-					json.Unmarshal(insurerAsBytes, &insurer)
-
-					userRisksResponse.InsurerName = insurer.Name
-				}
-			}
-
-
-
-
-		} else if risk.Type == "IDCARD" {
-			//retrieve group index
-			idCardgroupIndexAsBytes, err := stub.GetState(ID_CARD_GROUPINDEX)
-			if err != nil {
-				return nil, errors.New("Failed to get idCard group index")
-			}
-			var idCardgroupIndex []string
-			json.Unmarshal(idCardgroupIndexAsBytes, &idCardgroupIndex)	
-
-			for _, groupId := range idCardgroupIndex{
-				groupAsBytes, err := stub.GetState(groupId)
-				if err != nil {
-					return nil, errors.New("Failed to get group")
-				}
-				group := Group{}
-				json.Unmarshal(groupAsBytes, &group)
-
-				var groupRisks []string
-				groupRisks = group.RiskIds
-
-				if stringInSlice(risk.Id, groupRisks){
-					userRisksResponse.GroupId = group.Name
-					userRisksResponse.PolicyExpiryDate = group.EndDate
-					//get Insurer name
-					var InsId = group.InsurerId
-
-					//get insurer details
-					insurerAsBytes, err := stub.GetState(InsId)
-					if err != nil {
-						return nil, errors.New("Failed to get insurer")
-					}
-					insurer := Insurer{}
-					json.Unmarshal(insurerAsBytes, &insurer)
-
-					userRisksResponse.InsurerName = insurer.Name
-				}
-			}
-
-		}
+		
+		
 			//pushing obj to struct array
 			userRisks = append(userRisks,userRisksResponse)
 
