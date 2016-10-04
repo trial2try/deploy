@@ -97,6 +97,7 @@ type Member struct{
     HomeAddress	string 		`json:"address"`
     Dob			string 		`json:"dob"`
     RiskIds 	[]string 	`json:"riskids"`
+    GroupIds 	[]string 	`json:"groupids"`
     Tokens 		float64 	`json:tokens`
 }
 
@@ -289,7 +290,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	member1.Dob = "20 Nov 93"
 	member1.RiskIds = append(member1.RiskIds, risk3.Id)
 	member1.Tokens = 1000
-	
+	member1.GroupIds = append(member1.GroupIds,"bi001")
 
 	member2.UserId = "uid002"
 	member2.Name = "Thomas Buck"
@@ -299,7 +300,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	member2.Dob = "20 Sept 94"
 	member2.RiskIds = append(member2.RiskIds, risk1.Id)
 	member2.Tokens = 1200
-	
+	member2.GroupIds = append(member2.GroupIds,"bi001")
 
 	member3.UserId = "uid003"
 	member3.Name = "George Tent"
@@ -309,6 +310,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	member3.Dob = "20 Sept 94"
 	member3.RiskIds = append(member3.RiskIds, risk2.Id)
 	member3.Tokens = 1450
+	member3.GroupIds = append(member3.GroupIds,"bi001")
 
 	insurer1.Id = "ins001"
 	insurer1.Name = "JKL Insurance"
@@ -930,7 +932,7 @@ func (t *SimpleChaincode) getGroupRisks(stub *shim.ChaincodeStub, args []string)
 // ============================================================================================================================
 //func (t *SimpleChaincode) getUserRisks(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
-
+/*
 	fmt.Println("running getUserRisks()")
 
 	if len(args) != 1 {
@@ -1100,7 +1102,8 @@ func (t *SimpleChaincode) getUserRisks(stub *shim.ChaincodeStub, args []string) 
 			userRisksAsBytes, _ := json.Marshal(userRisks)
 
 		return userRisksAsBytes,nil
-
+*/
+		return nil,nil
 }
 
 
