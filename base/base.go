@@ -85,6 +85,7 @@ type Risk struct{
 	Type 		string 		`json:"type"`
 	Status 		string 		`json:"status"`
 	OwnerId 	string 		`json:"ownerid"`
+	GroupId 	string 		`json:"groupid"`
 	ClaimIds	[]string 	`json:"claimsids"`
 	LoggedDate	int64		`json:"loggedDate"`
 }
@@ -97,7 +98,6 @@ type Member struct{
     HomeAddress	string 		`json:"address"`
     Dob			string 		`json:"dob"`
     RiskIds 	[]string 	`json:"riskids"`
-    GroupIds 	[]string 	`json:"groupids"`
     Tokens 		float64 	`json:tokens`
 }
 
@@ -120,7 +120,7 @@ type Insurer struct{
 }
 
 /*	RESPONSE STRUCTURES	*/
-type GroupRisksResponse struct{
+type RiskResponse struct{
 	Id 			string 		`json:"id"`
 	Value 		float64 	`json:"value"`										
 	Premium 	float64		`json:"premium"`
@@ -130,6 +130,19 @@ type GroupRisksResponse struct{
 	OwnerName 	string 		`json:"ownerName"`
 	ClaimIds	[]string 	`json:"claimsids"`
 	LoggedDate	int64		`json:"loggedDate"`
+}
+
+type GroupRisksResponse struct{
+	Name 		 	string 			`json:"name"`
+	RiskType	 	string			`json:"riskType"`	
+	Status		 	string 			`json:"status"`
+	PoolBalance	 	float64			`json:"poolBalance"`
+	InsurerName	 	string 			`json:"insurer"`
+	CreatedDate  	int64 			`json:"createddate"`
+	EndDate 	 	int64 			`json:"enddate"`
+	GroupPremium 	float64			`json:"groupPremium"`
+	Risks			[]RiskResponse 	`json:"risks"`
+
 }
 
 type UserRisksResponse struct{
@@ -260,6 +273,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	risk1.Type = BICYCLE
 	risk1.Status = "covered"
 	risk1.OwnerId = "uid002"
+	risk1.GroupId = "bi001"
 	risk1.LoggedDate = makeTimestamp()
 
 	risk2.Id = "rid002"
@@ -269,6 +283,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	risk2.Type = BICYCLE
 	risk2.Status = "covered"
 	risk2.OwnerId = "uid003"
+	risk2.GroupId = "bi001"
 	risk2.ClaimIds = append(risk2.ClaimIds, claim1.Id)
 	risk2.LoggedDate = makeTimestamp()
 
@@ -279,6 +294,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	risk3.Type = BICYCLE
 	risk3.Status = "covered"
 	risk3.OwnerId = "uid001"
+	risk3.GroupId = "bi001"
 	risk3.ClaimIds = append(risk3.ClaimIds, claim2.Id)
 	risk3.LoggedDate = makeTimestamp()
 
@@ -290,7 +306,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	member1.Dob = "20 Nov 93"
 	member1.RiskIds = append(member1.RiskIds, risk3.Id)
 	member1.Tokens = 1000
-	member1.GroupIds = append(member1.GroupIds,"bi001")
+	
 
 	member2.UserId = "uid002"
 	member2.Name = "Thomas Buck"
@@ -300,7 +316,7 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	member2.Dob = "20 Sept 94"
 	member2.RiskIds = append(member2.RiskIds, risk1.Id)
 	member2.Tokens = 1200
-	member2.GroupIds = append(member2.GroupIds,"bi001")
+	
 
 	member3.UserId = "uid003"
 	member3.Name = "George Tent"
@@ -310,7 +326,6 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	member3.Dob = "20 Sept 94"
 	member3.RiskIds = append(member3.RiskIds, risk2.Id)
 	member3.Tokens = 1450
-	member3.GroupIds = append(member3.GroupIds,"bi001")
 
 	insurer1.Id = "ins001"
 	insurer1.Name = "JKL Insurance"
@@ -738,6 +753,7 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 		risk.Premium = 	premium											// Premium calculated at the time of risk added to group
 		risk.Status = "covered" 										// risk is insured 
 		risk.LoggedDate = makeTimestamp()
+		risk.GroupId = args[1]
 		//append risk to group
 		group.RiskIds = append(group.RiskIds, risk.Id)
 		fmt.Println("! risk "+risk.Id+"added to group: ", group.Name)
@@ -745,10 +761,6 @@ func (t *SimpleChaincode) AddRisk(stub *shim.ChaincodeStub, args []string) ([]by
 		member.Tokens = member.Tokens-premium
 		insurer.Tokens = insurer.Tokens + premium * percentage[1] 						// premium * insurer share %
 		
-		//If its a new group append groupIds
-		if(!(stringInSlice(args[1],member.GroupIds))){
-			member.GroupIds = append(member.GroupIds,args[1])
-		}
 
 		//Update Member
 		jsonAsBytes, _ := json.Marshal(member)
@@ -879,7 +891,7 @@ func (t *SimpleChaincode) getGroupRisks(stub *shim.ChaincodeStub, args []string)
 	if len(args) != 1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting name of the group to query ")
 	}
-	groupRisk:= GroupRisksResponse{}
+	groupRisksResponse:= GroupRisksResponse{}
 	risk := Risk{}
 	//Get Group
 	groupAsBytes, err := stub.GetState(args[0])
@@ -889,10 +901,30 @@ func (t *SimpleChaincode) getGroupRisks(stub *shim.ChaincodeStub, args []string)
 	group := Group{}
 	json.Unmarshal(groupAsBytes, &group)
 
-	var groupRisksResponse []GroupRisksResponse
+	//Setting group details
+	groupRisksResponse.Name = group.Name
+	groupRisksResponse.RiskType = group.RiskType
+	groupRisksResponse.Status = group.Status
+	groupRisksResponse.PoolBalance = group.PoolBalance
+	groupRisksResponse.CreatedDate = group.CreatedDate
+	groupRisksResponse.EndDate = group.EndDate
+	groupRisksResponse.GroupPremium = group.GroupPremium
+
+	//Get Insurer
+	insurerAsBytes, err := stub.GetState(group.InsurerId)
+	if err != nil {
+		return nil, errors.New("Failed to get group")
+	}
+	insurer := Insurer{}
+	json.Unmarshal(insurerAsBytes, &insurer)
+
+	groupRisksResponse.InsurerName = insurer.Name
+
+	var risksResponse []RiskResponse
+	riskResponse := RiskResponse{}
 
 	for _,element := range group.RiskIds {
-		groupRisk = GroupRisksResponse{}
+		riskResponse = RiskResponse{}
 		riskAsbytes, err = stub.GetState(element) 
 		if err != nil {
 			jsonResp := "{\"Error\":\"Failed to get state for " + element + "\"}"
@@ -900,14 +932,14 @@ func (t *SimpleChaincode) getGroupRisks(stub *shim.ChaincodeStub, args []string)
 		}
 		json.Unmarshal(riskAsbytes, &risk)	
 		//Add risk to Response structure
-		groupRisk.Id = risk.Id
-		groupRisk.Value = risk.Value
-		groupRisk.Premium = risk.Premium
-		groupRisk.Model = risk.Model	
-		groupRisk.Type = risk.Type
-		groupRisk.Status = risk.Status
-		groupRisk.ClaimIds = risk.ClaimIds
-		groupRisk.LoggedDate = risk.LoggedDate
+		riskResponse.Id = risk.Id
+		riskResponse.Value = risk.Value
+		riskResponse.Premium = risk.Premium
+		riskResponse.Model = risk.Model	
+		riskResponse.Type = risk.Type
+		riskResponse.Status = risk.Status
+		riskResponse.ClaimIds = risk.ClaimIds
+		riskResponse.LoggedDate = risk.LoggedDate
 
 		//Getting Owner Name from owner id
 		memberAsBytes, err := stub.GetState(risk.OwnerId)
@@ -917,10 +949,11 @@ func (t *SimpleChaincode) getGroupRisks(stub *shim.ChaincodeStub, args []string)
 		member := Member{}
 		json.Unmarshal(memberAsBytes, &member)
 		//Add Name
-		groupRisk.OwnerName = member.Name
+		riskResponse.OwnerName = member.Name
 		//Append to Respone array
-		groupRisksResponse = append(groupRisksResponse,groupRisk)
+		risksResponse = append(risksResponse,riskResponse)
 	}
+	groupRisksResponse.Risks = risksResponse
 	groupRisksResponseAsBytes, _ := json.Marshal(groupRisksResponse)
 
 	return groupRisksResponseAsBytes, nil
