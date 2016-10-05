@@ -925,6 +925,7 @@ func (t *SimpleChaincode) getGroupRisks(stub *shim.ChaincodeStub, args []string)
 
 	for _,element := range group.RiskIds {
 		riskResponse = RiskResponse{}
+		risk = Risk{}
 		riskAsbytes, err = stub.GetState(element) 
 		if err != nil {
 			jsonResp := "{\"Error\":\"Failed to get state for " + element + "\"}"
@@ -938,6 +939,7 @@ func (t *SimpleChaincode) getGroupRisks(stub *shim.ChaincodeStub, args []string)
 		riskResponse.Model = risk.Model	
 		riskResponse.Type = risk.Type
 		riskResponse.Status = risk.Status
+		fmt.Println("Debugging for ",risk.Id," is ",risk.ClaimIds)
 		riskResponse.ClaimIds = risk.ClaimIds
 		riskResponse.LoggedDate = risk.LoggedDate
 
