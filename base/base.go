@@ -210,7 +210,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	jsonAsBytes, _ := json.Marshal(bicycleInit)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
 	err = stub.PutState(BICYCLE_GROUP_INDEX, jsonAsBytes)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("bicycle index cannot be created")
 	}
 
 	var riskInit []string
@@ -221,7 +221,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	jsonAsBytes, _ = json.Marshal(riskInit)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
 	err = stub.PutState(RISK_INDEX, jsonAsBytes)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("risk index cannot be created")
 	}
 
 	var memberInit []string
@@ -232,7 +232,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	jsonAsBytes, _ = json.Marshal(memberInit)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
 	err = stub.PutState(MEMBER_INDEX, jsonAsBytes)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("member index cannot be created")
 	}
 
 	var claimInit []string
@@ -242,7 +242,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	jsonAsBytes, _ = json.Marshal(claimInit)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
 	err = stub.PutState(CLAIM_INDEX, jsonAsBytes)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("claim index cannot be created")
 	}
 
 	var insurerInit []string
@@ -253,14 +253,14 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	jsonAsBytes, _ = json.Marshal(insurerInit)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
 	err = stub.PutState(INSURER_INDEX, jsonAsBytes)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("insurance index cannot be created")
 	}
 
 	var proposalInit []string
 	jsonAsBytes, _ = json.Marshal(proposalInit)								//marshal an emtpy array of strings to clear the index
 	err = stub.PutState(PROPOSAL_INDEX, jsonAsBytes)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("proposal index cannot be created")
 	}
 
 	group1 := Group{}
@@ -537,7 +537,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	} else if function == "create_proposal" {
 		return t.CreateProposal(stub, args)
 	} else if function == "add_bid" {
-		//return t.AddBid(stub, args)
+		return t.AddBid(stub, args)
 	}
 	fmt.Println("invoke did not find func: " + function)
 
@@ -663,7 +663,7 @@ func (t *SimpleChaincode) CreateRisk(stub shim.ChaincodeStubInterface, args []st
 	jsonAsBytes, _ := json.Marshal(risk)
 	err = stub.PutState(risk.Id, jsonAsBytes)				
 	if err != nil {
-		return nil, err
+		return nil, errors.New("Risk cannot be created")
 	}
 
 	riskIndexAsBytes, err := stub.GetState(RISK_INDEX)
@@ -679,7 +679,9 @@ func (t *SimpleChaincode) CreateRisk(stub shim.ChaincodeStubInterface, args []st
 	fmt.Println("! risk index: ", riskIndex)
 	jsonAsBytes, _ = json.Marshal(riskIndex)
 	err = stub.PutState(RISK_INDEX, jsonAsBytes)						//store risk id of risk
-
+	if err != nil {
+		return nil, err
+	}
 	//Get Member
 	memberAsBytes, err := stub.GetState(risk.OwnerId)
 	if err != nil {
@@ -692,14 +694,16 @@ func (t *SimpleChaincode) CreateRisk(stub shim.ChaincodeStubInterface, args []st
 	jsonAsBytes, _ = json.Marshal(member)
 	err = stub.PutState(member.UserId, jsonAsBytes)				
 	if err != nil {
-		return nil, err
+		return nil, errors.New(" Failed to update member")
 	}
 
 	//riskId := []byte(risk.Id)
 
 	jsonAsBytes, _ = json.Marshal(risk.Id)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
 	err = stub.PutState(RISK_ID, jsonAsBytes)
-
+	if err != nil {
+		return nil, errors.New(" Failed to update risk")
+	}
 	return nil, nil
 }
 
@@ -798,25 +802,25 @@ func (t *SimpleChaincode) AddRisk(stub shim.ChaincodeStubInterface, args []strin
 		jsonAsBytes, _ := json.Marshal(member)
 		err = stub.PutState(member.UserId, jsonAsBytes)				
 		if err != nil {
-			return nil, err
+			return nil, errors.New(" Failed to update member")
 		}
 		//Update Risk
 		jsonAsBytes, _ = json.Marshal(risk)
 		err = stub.PutState(risk.Id, jsonAsBytes)				
 		if err != nil {
-			return nil, err
+			return nil, errors.New(" Failed to update risk")
 		}
 		//Update Group
 		jsonAsBytes, _ = json.Marshal(group)
 		err = stub.PutState(group.Name, jsonAsBytes)
 		if err != nil {
-			return nil, err
+			return nil, errors.New(" Failed to update group")
 		}
 		//Update Insurer
 		jsonAsBytes, _ = json.Marshal(insurer)
 		err = stub.PutState(insurer.Id, jsonAsBytes)				
 		if err != nil {
-			return nil, err
+			return nil, errors.New(" Failed to update insurer")
 		}
 		//Update Admin Account
 		err = stub.PutState(ADMIN_FEE, []byte(strconv.FormatFloat(previous_val + risk.Premium- premium * percentage[0]-premium * percentage[1], 'E', -1, 64)));
@@ -877,7 +881,7 @@ func (t *SimpleChaincode) RaiseClaim(stub shim.ChaincodeStubInterface, args []st
 	jsonAsBytes, _ := json.Marshal(claim)
 	err = stub.PutState(claim.Id, jsonAsBytes)				
 	if err != nil {
-		return nil, err
+		return nil, errors.New(" Failed to create claim")
 	}
 
 	//Get chainIndex
@@ -895,13 +899,15 @@ func (t *SimpleChaincode) RaiseClaim(stub shim.ChaincodeStubInterface, args []st
 	jsonAsBytes, _ = json.Marshal(claimIndex)
 	//Update chainIndex in chain
 	err = stub.PutState(CLAIM_INDEX, jsonAsBytes)								//store chain id of risk
-
+	if err != nil {
+		return nil, errors.New(" Failed to update claim index")
+	}
 	risk.ClaimIds = append(risk.ClaimIds, claim.Id)
 	
 	jsonAsBytes, _ = json.Marshal(risk)
 	err = stub.PutState(risk.Id, jsonAsBytes)				
 	if err != nil {
-		return nil, err
+		return nil, errors.New(" Failed to update risk")
 	}
 
 	return nil, nil
@@ -927,26 +933,65 @@ func (t *SimpleChaincode) CreateProposal(stub shim.ChaincodeStubInterface, args 
 	proposal.RiskType = args[1]
 	proposal.GroupName = args[2]
 	proposal.Status = args[3]
-
+	//Convert to bytes and persist
 	proposalAsBytes, _ := json.Marshal(proposal)
 	err := stub.PutState(proposal.Id, proposalAsBytes)				
 	if err != nil {
-		return nil, err
+		return nil, errors.New("Failed to add proposal")
 	}
-
+	//Get proposal index
 	proposalIndexAsBytes, err := stub.GetState(PROPOSAL_INDEX)
 	if err != nil {
-		return nil, errors.New("Failed to get risk index")
+		return nil, errors.New("Failed to get proposal index")
 	}
 
 	var proposalIndex []string
 	json.Unmarshal(proposalIndexAsBytes, &proposalIndex)								//un stringify it aka JSON.parse()
 	
-	//append
+	//append 
 	proposalIndex = append(proposalIndex, proposal.Id)										//add proposal id to index list
 	fmt.Println("! proposal index: ", proposalIndex)
 	proposalIndexAsBytes, _ = json.Marshal(proposalIndex)
 	err = stub.PutState(PROPOSAL_INDEX, proposalIndexAsBytes)						//store proposal index of risk
+	if err != nil {
+		return nil, errors.New("Failed to update proposal index")
+	}
+	return nil,nil
+}
+
+// ============================================================================================================================
+/* 
+AddBid - Invoke function to add a new bid to the given proposal and write key/value pair
+Inputs: 	args[0]		args[1]		args[2]
+			ProposalId 	BidderId 	BiddingRate
+*/
+// ============================================================================================================================
+func (t *SimpleChaincode) AddBid(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) AddBid(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+	fmt.Println("running AddBid()")
+	if (len(args) != 3){
+		return nil, errors.New("Incorrect number of arguments. Expecting 4 ")
+	}
+	//Get Proposal
+	proposalAsBytes, err := stub.GetState(args[0])
+	if err != nil {
+		return nil, errors.New("Failed to get proposal")
+	}
+	proposal := Proposal{}
+	json.Unmarshal(proposalAsBytes, &proposal)
+
+	bid := Bid{}
+	bid.BidderId = args[1]
+	bid.BiddingRate = args[2]
+	bid.Status = "Pending"
+
+	proposal.Bids = append(proposal.Bids, bid)
+	//Write proposals back
+	proposalAsBytes, _ = json.Marshal(proposal)
+	err = stub.PutState(proposal.Id, proposalAsBytes)				
+	if err != nil {
+		return nil, errors.New(" Failed to update proposal")
+	}
 
 	return nil,nil
 }
@@ -995,10 +1040,10 @@ func (t *SimpleChaincode) CreateGroup(stub shim.ChaincodeStubInterface, args []s
 	group.CreatedDate = makeTimestamp()
 	group.EndDate = group.CreatedDate + 31449600
 
-	groupAsBytes, _ := json.Marshal(group)										//add group in chain
+	groupAsBytes, _ := json.Marshal(group)										
 	err = stub.PutState(group.Name, groupAsBytes)				
 	if err != nil {
-		return nil, err
+		return nil, errors.New(" Failed to create group")
 	}
 
 	groupIndexAsBytes, err := stub.GetState(tempIndex)
@@ -1014,7 +1059,9 @@ func (t *SimpleChaincode) CreateGroup(stub shim.ChaincodeStubInterface, args []s
 	fmt.Println("! group index: ", groupIndex)
 	jsonAsBytes, _ := json.Marshal(groupIndex)
 	err = stub.PutState(tempIndex, jsonAsBytes)									//store group index
-
+	if err != nil {
+		return nil, errors.New(" Failed to update group index")
+	}
 	return nil, nil
 }
 
