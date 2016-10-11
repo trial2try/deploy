@@ -42,11 +42,11 @@ func main() {
 
 var BICYCLE_GROUP_INDEX = "_bicycleindex"													//name for the key/value that will store a list of all bicycle groups
 var SMARTPHONE_GROUP_INDEX = "_smartphoneindex"
-var ID_CARD_GROUPINDEX = "_idcardindex"
+var TELEVISION_GROUPINDEX = "_televisionindex"
 
 var BICYCLE = "bicycle"
 var SMARTPHONE = "smartphone"
-var IDCARD = "idcard"
+var TELEVISION = "television"
 
 var RISK_INDEX = "_risksindex"
 var MEMBER_INDEX = "_memebersindex"
@@ -58,9 +58,11 @@ var ADMIN_FEE ="_adminfee"
 
 var riskCounter = 3
 var memberCounter = 3
-var insurerCounter = 1
+var insurerCounter = 3
 var claimCounter = 2
 var bicycleCounter = 4
+var smartphoneCounter = 0
+var televisionCounter = 0
 
 
 /* DYNAMIC VARIABLE */
@@ -228,7 +230,6 @@ func (t *SimpleChaincode) Init(stub *shim.ChaincodeStub, function string, args [
 	insurerInit = append(insurerInit, "ins001")
 	insurerInit = append(insurerInit, "ins002")
 	insurerInit = append(insurerInit, "ins003")
-	insurerInit = append(insurerInit, "ins004")	
 
 	jsonAsBytes, _ = json.Marshal(insurerInit)								//marshal an emtpy array of strings to clear the index,  now intialising with hard coded values
 	err = stub.PutState(INSURER_INDEX, jsonAsBytes)
@@ -506,6 +507,8 @@ func (t *SimpleChaincode) Invoke(stub *shim.ChaincodeStub, function string, args
 		return t.AddRisk(stub, args)
 	} else if function == "raise_claim" {
 		return t.RaiseClaim(stub, args)
+	} else if function == "create_group" {
+		return t.CreateGroup(stub, args)
 	}
 	fmt.Println("invoke did not find func: " + function)
 
@@ -875,6 +878,77 @@ func (t *SimpleChaincode) RaiseClaim(stub *shim.ChaincodeStub, args []string) ([
 	return nil, nil
 }
 
+
+// ============================================================================================================================
+/* 
+CreateGroup - Invoke function to create a new risk write key/value pair
+Inputs: 	args[0]		args[1]			args[2] 			args[3]
+			RiskType	Status 			Insurer(Optional)	GroupPremium(Optional)
+			bicycle		open/closed	
+*/
+// ============================================================================================================================
+//func (t *SimpleChaincode) CreateGroup(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) CreateGroup(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+	
+	fmt.Println("running CreateGroup()")
+	var tempIndex string
+	if (len(args)<2 || len(args)>4){
+		return nil, errors.New("Incorrect number of arguments. Expecting between 2 and 4 ")
+	}
+	group := Group{}
+	if(args[0]==BICYCLE){
+		group.RiskType = BICYCLE
+		group.Status = args[1]
+		group.Name = makeBicycleId()
+		tempIndex = BICYCLE_GROUP_INDEX
+	} else if(args[0]==SMARTPHONE){
+		group.RiskType = SMARTPHONE
+		group.Status = args[1]
+		group.Name = makeSmartphoneId()
+		tempIndex = SMARTPHONE_GROUP_INDEX
+	} else if(args[0]==TELEVISION){
+		group.RiskType = TELEVISION
+		group.Status = args[1] 
+		group.Name = makeTelevisionId()
+		tempIndex = TELEVISION_GROUPINDEX
+	} else{
+		return nil,errors.New("Incorrect group type. Expecting bicycle or smartphone or television")
+	}
+
+	if(len(args)==4){
+		premium, err := strconv.ParseFloat(args[3], 64)
+		if err != nil {
+			return nil, errors.New("4th argument must be a numeric string")
+		}
+		group.InsurerId = args[2]
+		group.GroupPremium = premium
+	}
+	group.CreatedDate = makeTimestamp()
+	group.EndDate = group.CreatedDate + 31449600
+
+	groupAsBytes, _ := json.Marshal(group)										//add group in chain
+	err := stub.PutState(group.Name, groupAsBytes)				
+	if err != nil {
+		return nil, err
+	}
+
+	groupIndexAsBytes, err := stub.GetState(tempIndex)
+	if err != nil {
+		return nil, errors.New("Failed to get group index")
+	}
+
+	var groupIndex []string
+	json.Unmarshal(groupIndexAsBytes, &groupIndex)								//un stringify it aka JSON.parse()
+	
+	//append
+	groupIndex = append(groupIndex, group.Name)									//add group name to index list
+	fmt.Println("! group index: ", groupIndex)
+	jsonAsBytes, _ := json.Marshal(groupIndex)
+	err = stub.PutState(tempIndex, jsonAsBytes)									//store group index
+
+	return nil, nil
+}
+
 // ============================================================================================================================
 /*	getGroupRisks - Query function to read all risk details of a Group
  	Inputs: 	args[0]
@@ -1087,6 +1161,18 @@ func makeInsurerId() string {
 func makeBicycleId() string {
 	bicycleCounter = bicycleCounter+1
 	id :="bi00"+strconv.Itoa(bicycleCounter)
+	return id
+}
+
+func makeSmartphoneId() string {
+	smartphoneCounter = smartphoneCounter+1
+	id :="sp00"+strconv.Itoa(smartphoneCounter)
+	return id
+}
+
+func makeTelevisionId() string {
+	televisionCounter = televisionCounter+1
+	id :="te00"+strconv.Itoa(televisionCounter)
 	return id
 }
 /*
