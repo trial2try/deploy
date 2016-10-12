@@ -136,7 +136,7 @@ type Proposal struct{
 
 type Bid struct{
 	BidderId 	string		`json:"bidderId"`
-	BiddingRate string		`json:"biddingRate"`
+	BiddingRate float64		`json:"biddingRate"`
 	Status 		string		`json:"status"`
 }
 
@@ -195,7 +195,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 		return nil, err
 	}
 
-	err = stub.PutState(ADMIN_FEE, []byte(strconv.FormatFloat(0, 'E', -1, 64)));
+	err = stub.PutState(ADMIN_FEE, []byte(strconv.FormatFloat(0, 'f', -1, 64)));
 		if err != nil {
 			return nil, errors.New("Billing account cannot be created")
 	}
@@ -538,6 +538,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.CreateProposal(stub, args)
 	} else if function == "add_bid" {
 		return t.AddBid(stub, args)
+	} else if function == "select_bid" {
+		return t.SelectBid(stub, args)
 	}
 	fmt.Println("invoke did not find func: " + function)
 
@@ -823,7 +825,7 @@ func (t *SimpleChaincode) AddRisk(stub shim.ChaincodeStubInterface, args []strin
 			return nil, errors.New(" Failed to update insurer")
 		}
 		//Update Admin Account
-		err = stub.PutState(ADMIN_FEE, []byte(strconv.FormatFloat(previous_val + risk.Premium- premium * percentage[0]-premium * percentage[1], 'E', -1, 64)));
+		err = stub.PutState(ADMIN_FEE, []byte(strconv.FormatFloat(previous_val + risk.Premium- premium * percentage[0]-premium * percentage[1], 'f', -1, 64)));
 		if err != nil {
 			return nil, errors.New("Billing account not updated")
 		}
@@ -916,8 +918,8 @@ func (t *SimpleChaincode) RaiseClaim(stub shim.ChaincodeStubInterface, args []st
 // ============================================================================================================================
 /* 
 CreateProposal - Invoke function to create a new proposal and write key/value pair
-Inputs: 	args[0]	args[1]		args[2] 	args[3]	
-			Type 	RiskType 	GroupName	Status(Testing Purpose)
+Inputs: 	args[0]				args[1]		args[2] 	args[3]	
+			Type(rebid/new) 	RiskType 	GroupName	Status(Testing Purpose)
 			 	
 */
 // ============================================================================================================================
@@ -972,6 +974,10 @@ func (t *SimpleChaincode) AddBid(stub shim.ChaincodeStubInterface, args []string
 	if (len(args) != 3){
 		return nil, errors.New("Incorrect number of arguments. Expecting 4 ")
 	}
+	biddingRate, err := strconv.ParseFloat(args[2], 64)
+	if err != nil {
+		return nil, errors.New("3rd argument must be a numeric string")
+	}
 	//Get Proposal
 	proposalAsBytes, err := stub.GetState(args[0])
 	if err != nil {
@@ -982,10 +988,85 @@ func (t *SimpleChaincode) AddBid(stub shim.ChaincodeStubInterface, args []string
 
 	bid := Bid{}
 	bid.BidderId = args[1]
-	bid.BiddingRate = args[2]
+	bid.BiddingRate = biddingRate
 	bid.Status = "Pending"
 
 	proposal.Bids = append(proposal.Bids, bid)
+	//Write proposals back
+	proposalAsBytes, _ = json.Marshal(proposal)
+	err = stub.PutState(proposal.Id, proposalAsBytes)				
+	if err != nil {
+		return nil, errors.New(" Failed to update proposal")
+	}
+
+	return nil,nil
+}
+
+// ============================================================================================================================
+/* 
+SelectBid - Invoke function to select a bid and create/modify group according to its type
+Inputs: 	args[0]		args[1]		
+			ProposalId 	BidderId 	
+*/
+// ============================================================================================================================
+func (t *SimpleChaincode) SelectBid(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+//func (t *SimpleChaincode) SelectBid(stub *shim.ChaincodeStub, args []string) ([]byte, error) {
+	fmt.Println("running SelectBid()")
+	if (len(args) != 2){
+		return nil, errors.New("Incorrect number of arguments. Expecting 2 ")
+	}
+	//Get Proposal
+	proposalAsBytes, err := stub.GetState(args[0])
+	if err != nil {
+		return nil, errors.New("Failed to get proposal")
+	}
+	proposal := Proposal{}
+	json.Unmarshal(proposalAsBytes, &proposal)
+
+	if proposal.Type == "rebid" {
+		for _,element := range proposal.Bids {
+			if(element.BidderId == args[1]){
+				proposal.SelectedBid = element
+				//Get Group
+				groupAsBytes, err := stub.GetState(proposal.GroupName)
+				if err != nil {
+					return nil, errors.New("Failed to get group")
+				}
+				group := Group{}
+				json.Unmarshal(groupAsBytes, &group)
+				group.InsurerId = element.BidderId
+				group.GroupPremium = element.BiddingRate
+				//Put Group
+				jsonAsBytes, _ := json.Marshal(group)
+				err = stub.PutState(group.Name, jsonAsBytes)
+				if err != nil {
+					return nil, errors.New(" Failed to update group")
+				}
+				element.Status = "Won" 
+			} else {
+				element.Status = "Lost" 
+			}
+		}
+	} else if proposal.Type == "new" {
+		for _,element := range proposal.Bids {
+			if(element.BidderId == args[1]){
+				proposal.SelectedBid = element
+				var args1 []string
+				args1 = append(args1, proposal.RiskType)
+				args1 = append(args1, "open")
+				args1 = append(args1, element.BidderId)
+				args1 = append(args1, strconv.FormatFloat(element.BiddingRate, 'f', -1, 64))
+				element.Status = "Won"
+				return t.CreateGroup(stub, args1)
+			} else {
+				element.Status = "Lost"
+			}
+		}
+	} else {
+		return nil, errors.New("Failed to select bid")
+	}
+
+	proposal.Status = "closed"
 	//Write proposals back
 	proposalAsBytes, _ = json.Marshal(proposal)
 	err = stub.PutState(proposal.Id, proposalAsBytes)				
